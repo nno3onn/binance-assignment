@@ -153,7 +153,8 @@ class ApplicationEvent(Base):
     __tablename__ = "application_events"
     __table_args__ = (
         CheckConstraint(
-            "severity in ('INFO', 'WARN', 'ERROR')", name="ck_application_events_severity"
+            "severity in ('INFO', 'WARNING', 'ERROR')",
+            name="ck_application_events_severity",
         ),
         Index("ix_application_events_event_time", "event_time"),
         Index("ix_application_events_event_type", "event_type"),

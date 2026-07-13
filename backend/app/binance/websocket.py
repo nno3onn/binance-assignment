@@ -59,6 +59,22 @@ class CollectorRuntimeTracker(Protocol):
         pass
 
 
+class CollectorEventHistory(Protocol):
+    def websocket_connected(self, symbols: list[str], interval: str) -> None:
+        pass
+
+    def websocket_disconnected(self, symbols: list[str], interval: str) -> None:
+        pass
+
+    def websocket_reconnecting(self, symbols: list[str], interval: str, attempt: int) -> None:
+        pass
+
+    def invalid_message_received(
+        self, symbol: str | None = None, interval: str | None = None
+    ) -> None:
+        pass
+
+
 KlineHandler = Callable[[BinanceWebSocketKline], Awaitable[None] | None]
 Sleep = Callable[[float], Awaitable[None]]
 
@@ -73,6 +89,7 @@ class BinanceWebSocketCollector:
         on_kline: KlineHandler,
         connector: WebSocketConnector | None = None,
         runtime_tracker: CollectorRuntimeTracker | None = None,
+        event_history: CollectorEventHistory | None = None,
         sleep: Sleep = asyncio.sleep,
         keepalive_seconds: float = 30.0,
         retry_count: int = 3,
@@ -83,6 +100,7 @@ class BinanceWebSocketCollector:
         self._on_kline = on_kline
         self._connector = connector or self._connect
         self._runtime_tracker = runtime_tracker
+        self._event_history = event_history
         self._sleep = sleep
         self._keepalive_seconds = keepalive_seconds
         self._retry_count = retry_count
@@ -104,6 +122,12 @@ class BinanceWebSocketCollector:
                     return
                 if reconnect_attempt >= self._retry_count:
                     raise
+                if self._event_history is not None:
+                    self._event_history.websocket_reconnecting(
+                        self._symbols,
+                        self._interval,
+                        reconnect_attempt + 1,
+                    )
                 await self._sleep(self._backoff_seconds(reconnect_attempt))
                 reconnect_attempt += 1
 
@@ -123,6 +147,8 @@ class BinanceWebSocketCollector:
             await self._call_runtime_tracker(
                 "mark_connection_opened", self._symbols, self._interval
             )
+            if self._event_history is not None:
+                self._event_history.websocket_connected(self._symbols, self._interval)
             keepalive_task = asyncio.create_task(self._keepalive(websocket))
             try:
                 while not self._stopped.is_set():
@@ -139,6 +165,8 @@ class BinanceWebSocketCollector:
                     )
                     if kline is None:
                         await self._call_runtime_tracker("record_invalid_message")
+                        if self._event_history is not None:
+                            self._event_history.invalid_message_received(interval=self._interval)
                         continue
 
                     await self._call_runtime_tracker("record_kline", kline)
@@ -157,6 +185,8 @@ class BinanceWebSocketCollector:
                 await self._call_runtime_tracker(
                     "mark_connection_closed", self._symbols, self._interval
                 )
+                if self._event_history is not None:
+                    self._event_history.websocket_disconnected(self._symbols, self._interval)
                 self._active_connection = None
                 try:
                     await keepalive_task

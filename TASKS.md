@@ -113,7 +113,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
   - Commit message: `feat: add candle gap detection`
   - Prerequisites: T05, T09.
 
-- [ ] **T12 - Add event history**
+- [x] **T12 - Add event history**
   - Goal: Record operational events for disconnects, retries, backfills, gaps, and errors.
   - Scope: Event service and tests.
   - Expected files: `backend/app/services/events.py`, `backend/tests/*`.

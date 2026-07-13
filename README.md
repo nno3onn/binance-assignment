@@ -66,6 +66,10 @@ Initial backfill runs only when a symbol has no stored candles. It fetches the r
 
 The WebSocket collector subscribes to combined Binance kline streams for configured symbols and emits validated internal DTOs. It handles keepalive ping/pong, graceful shutdown, invalid message filtering, and bounded exponential reconnects. It does not persist data or update runtime status in T08.
 
+## Event History
+
+The event history layer records operational events such as WebSocket connect/disconnect/reconnect, invalid messages, initial backfill completion, and restart recovery completion/failure. Event recording is best-effort so a temporary event-store failure does not stop collection or recovery.
+
 ## Required Reading Before Work
 1. `PRODUCT.md`
 2. `AGENTS.md`

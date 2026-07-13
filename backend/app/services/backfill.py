@@ -14,6 +14,7 @@ from app.domain.market_data import (
 )
 from app.models.market_data import BackfillJob
 from app.repositories.interfaces import MarketDataRepository
+from app.services.events import EventHistoryService
 
 BINANCE_KLINES_MAX_LIMIT = 1000
 
@@ -53,6 +54,7 @@ class InitialBackfillService:
         interval: str,
         initial_backfill_hours: int,
         now: datetime | None = None,
+        event_history: EventHistoryService | None = None,
     ) -> None:
         self._repository = repository
         self._binance_rest_client = binance_rest_client
@@ -60,6 +62,7 @@ class InitialBackfillService:
         self._interval = interval
         self._initial_backfill_hours = initial_backfill_hours
         self._now = now
+        self._event_history = event_history
 
     def run(self) -> list[InitialBackfillResult]:
         return [self._run_for_symbol(symbol) for symbol in self._symbols]
@@ -73,6 +76,9 @@ class InitialBackfillService:
                 stored_candle_count=0,
                 backfill_job=None,
             )
+
+        if self._event_history is not None:
+            self._event_history.initial_backfill_started(symbol, self._interval)
 
         range_end = self._current_time()
         range_start = range_end - timedelta(hours=self._initial_backfill_hours)
@@ -102,6 +108,13 @@ class InitialBackfillService:
         )
         candles = [kline_to_rest_backfill_candle(symbol, self._interval, kline) for kline in klines]
         self._repository.bulk_upsert_candles(candles)
+        if self._event_history is not None:
+            self._event_history.initial_backfill_completed(
+                symbol=symbol,
+                interval=self._interval,
+                stored_candle_count=len(candles),
+                backfill_job_id=job.id,
+            )
 
         return InitialBackfillResult(
             symbol=symbol,

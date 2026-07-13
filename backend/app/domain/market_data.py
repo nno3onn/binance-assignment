@@ -43,8 +43,20 @@ class BackfillJobStatus(StrEnum):
 
 class EventSeverity(StrEnum):
     INFO = "INFO"
-    WARN = "WARN"
+    WARNING = "WARNING"
     ERROR = "ERROR"
+
+
+class ApplicationEventType(StrEnum):
+    WEBSOCKET_CONNECTED = "websocket_connected"
+    WEBSOCKET_DISCONNECTED = "websocket_disconnected"
+    WEBSOCKET_RECONNECTING = "websocket_reconnecting"
+    INITIAL_BACKFILL_STARTED = "initial_backfill_started"
+    INITIAL_BACKFILL_COMPLETED = "initial_backfill_completed"
+    RECOVERY_STARTED = "recovery_started"
+    RECOVERY_COMPLETED = "recovery_completed"
+    RECOVERY_FAILED = "recovery_failed"
+    INVALID_MESSAGE_RECEIVED = "invalid_message_received"
 
 
 @dataclass(frozen=True)

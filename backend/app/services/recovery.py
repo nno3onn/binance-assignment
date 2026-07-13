@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from app.binance.interfaces import BinanceRestClient
 from app.repositories.interfaces import MarketDataRepository
 from app.services.backfill import BINANCE_KLINES_MAX_LIMIT, kline_to_rest_backfill_candle
+from app.services.events import EventHistoryService
 from app.services.gaps import CandleGap, GapDetectionService
 
 
@@ -36,10 +37,12 @@ class RestartRecoveryService:
         repository: MarketDataRepository,
         binance_rest_client: BinanceRestClient,
         gap_detection_service: GapDetectionService,
+        event_history: EventHistoryService | None = None,
     ) -> None:
         self._repository = repository
         self._binance_rest_client = binance_rest_client
         self._gap_detection_service = gap_detection_service
+        self._event_history = event_history
 
     def recover_symbols(
         self,
@@ -62,22 +65,37 @@ class RestartRecoveryService:
         start: datetime | None = None,
         end: datetime | None = None,
     ) -> RestartRecoveryResult:
-        gap_detection = self._gap_detection_service.detect_for_symbol(
-            symbol=symbol,
-            interval=interval,
-            start=start,
-            end=end,
-        )
-        gap_results = [self._recover_gap(gap) for gap in gap_detection.gaps]
+        if self._event_history is not None:
+            self._event_history.recovery_started(symbol, interval)
+        try:
+            gap_detection = self._gap_detection_service.detect_for_symbol(
+                symbol=symbol,
+                interval=interval,
+                start=start,
+                end=end,
+            )
+            gap_results = [self._recover_gap(gap) for gap in gap_detection.gaps]
 
-        return RestartRecoveryResult(
-            symbol=symbol,
-            interval=interval,
-            recovered_gap_count=len(gap_results),
-            fetched_candle_count=sum(result.fetched_candle_count for result in gap_results),
-            stored_candle_count=sum(result.stored_candle_count for result in gap_results),
-            gap_results=gap_results,
-        )
+            result = RestartRecoveryResult(
+                symbol=symbol,
+                interval=interval,
+                recovered_gap_count=len(gap_results),
+                fetched_candle_count=sum(result.fetched_candle_count for result in gap_results),
+                stored_candle_count=sum(result.stored_candle_count for result in gap_results),
+                gap_results=gap_results,
+            )
+            if self._event_history is not None:
+                self._event_history.recovery_completed(
+                    symbol=symbol,
+                    interval=interval,
+                    recovered_gap_count=result.recovered_gap_count,
+                    stored_candle_count=result.stored_candle_count,
+                )
+            return result
+        except Exception as exc:
+            if self._event_history is not None:
+                self._event_history.recovery_failed(symbol, interval, exc)
+            raise
 
     def _recover_gap(self, gap: CandleGap) -> GapRecoveryResult:
         klines = self._binance_rest_client.get_klines(

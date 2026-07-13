@@ -176,6 +176,15 @@ class SqlAlchemyMarketDataRepository:
         self._normalize_application_event_datetimes(model)
         return model
 
+    def list_recent_application_events(self, limit: int = 100) -> list[ApplicationEvent]:
+        statement = (
+            select(ApplicationEvent).order_by(ApplicationEvent.event_time.desc()).limit(limit)
+        )
+        events = list(self.session.execute(statement).scalars().all())
+        for event in events:
+            self._normalize_application_event_datetimes(event)
+        return events
+
     def _find_candle(self, symbol: str, interval: str, open_time: datetime) -> Candle | None:
         statement = self._candles_for_symbol(symbol, interval).where(Candle.open_time == open_time)
         return self.session.execute(statement).scalar_one_or_none()

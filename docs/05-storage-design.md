@@ -32,7 +32,7 @@
 - Unique key: none; event history is append-only.
 - Foreign keys: optional `backfill_job_id -> backfill_jobs.id` with `ON DELETE SET NULL`.
 - Indexes: `event_time`; `event_type`; `symbol, interval`; `backfill_job_id`.
-- Constraints: `severity in ('INFO', 'WARN', 'ERROR')`.
+- Constraints: `severity in ('INFO', 'WARNING', 'ERROR')`.
 
 ## Idempotency
 `candles` must enforce a unique key on:

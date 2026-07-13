@@ -138,7 +138,8 @@ def upgrade() -> None:
             "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
         ),
         sa.CheckConstraint(
-            "severity in ('INFO', 'WARN', 'ERROR')", name="ck_application_events_severity"
+            "severity in ('INFO', 'WARNING', 'ERROR')",
+            name="ck_application_events_severity",
         ),
         sa.ForeignKeyConstraint(
             ["backfill_job_id"],

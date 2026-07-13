@@ -51,3 +51,6 @@ class MarketDataRepository(Protocol):
 
     def append_application_event(self, event: ApplicationEventInput) -> ApplicationEvent:
         pass
+
+    def list_recent_application_events(self, limit: int = 100) -> list[ApplicationEvent]:
+        pass
