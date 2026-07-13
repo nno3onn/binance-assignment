@@ -58,6 +58,10 @@ The backend repository layer uses SQLAlchemy ORM models and keeps candle writes 
 
 The Binance REST client is an adapter only. It does not call repositories or services. It provides `ping`, `get_server_time`, and `get_klines`, maps kline arrays into internal DTOs, and handles timeout, network, 4xx, 5xx, 429, invalid response, and bounded exponential-backoff retry behavior.
 
+## Initial Backfill
+
+Initial backfill runs only when a symbol has no stored candles. It fetches the recent `INITIAL_BACKFILL_HOURS` window through the Binance REST client, maps DTOs into candle domain inputs, and persists them through the idempotent repository path with `source=rest_backfill`.
+
 ## Required Reading Before Work
 1. `PRODUCT.md`
 2. `AGENTS.md`

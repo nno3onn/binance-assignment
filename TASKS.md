@@ -62,7 +62,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
   - Commit message: `feat: add binance rest client`
   - Prerequisites: T05.
 
-- [ ] **T07 - Implement initial backfill**
+- [x] **T07 - Implement initial backfill**
   - Goal: Backfill configured lookback when no stored candles exist.
   - Scope: Backfill service, job state, tests.
   - Expected files: `backend/app/services/backfill.py`, `backend/tests/*`, `docs/04-backfill-and-recovery.md`.
