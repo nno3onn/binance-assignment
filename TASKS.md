@@ -42,7 +42,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
   - Commit message: `feat: add database schema migrations`
   - Prerequisites: T02.
 
-- [ ] **T05 - Add candle domain model and repository**
+- [x] **T05 - Add candle domain model and repository**
   - Goal: Implement idempotent candle upsert and source tracking.
   - Scope: Domain types, repository, unit tests.
   - Expected files: `backend/app/domain/*`, `backend/app/repositories/*`, `backend/tests/*`.
@@ -53,7 +53,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
 
 ## Phase 3. Binance REST backfill
 
-- [ ] **T06 - Add Binance REST client**
+- [x] **T06 - Add Binance REST client**
   - Goal: Fetch 1m klines for BTCUSDT and ETHUSDT with timeout and error handling.
   - Scope: REST client and mocked tests.
   - Expected files: `backend/app/binance/rest.py`, `backend/tests/*`.

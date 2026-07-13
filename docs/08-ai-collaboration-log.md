@@ -8,6 +8,8 @@ Record AI-generated changes and human verification here. Keep entries short.
 | 2026-07-14 | T02 | Scaffolded uv-based FastAPI backend, config, health test, and backend check commands. | `make lint && make typecheck && make test && make check` passed. | Complete |
 | 2026-07-14 | T03 | Scaffolded Next.js App Router frontend with TypeScript, Tailwind CSS, TanStack Query, Zustand, ESLint, Prettier, and Vitest. | `make lint && make typecheck && make test && make build && make check` passed. | Complete |
 | 2026-07-14 | T04 | Added Alembic migrations for candles, runtime status, backfill jobs, and application events. | Alembic CLI up/down/re-upgrade passed on SQLite; `make check` passed. | Complete |
+| 2026-07-14 | T05 | Added SQLAlchemy ORM models, repository interface, idempotent repository implementation, and repository tests. | `make lint && make typecheck && make test && make check` passed. | Complete |
+| 2026-07-14 | T06 | Added Binance REST adapter, DTOs, error handling, timeout, and bounded exponential retry tests. | `make lint && make typecheck && make test && make check` passed. | Complete |
 
 ## Rule
 After each completed Task, append one row describing what AI changed and how it was verified.

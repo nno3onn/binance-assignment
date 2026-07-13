@@ -54,6 +54,10 @@ uv run alembic downgrade base
 
 The backend repository layer uses SQLAlchemy ORM models and keeps candle writes idempotent with the `symbol + interval + open_time` identity. Repository unit tests run against SQLite and avoid PostgreSQL-only SQL in the public repository API.
 
+## Binance REST Client
+
+The Binance REST client is an adapter only. It does not call repositories or services. It provides `ping`, `get_server_time`, and `get_klines`, maps kline arrays into internal DTOs, and handles timeout, network, 4xx, 5xx, 429, invalid response, and bounded exponential-backoff retry behavior.
+
 ## Required Reading Before Work
 1. `PRODUCT.md`
 2. `AGENTS.md`

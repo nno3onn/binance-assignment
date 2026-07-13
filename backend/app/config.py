@@ -11,6 +11,20 @@ class Settings(BaseSettings):
     symbols: str = Field(default="BTCUSDT,ETHUSDT", validation_alias="SYMBOLS")
     candle_interval: Literal["1m"] = Field(default="1m", validation_alias="CANDLE_INTERVAL")
     initial_backfill_hours: int = Field(default=24, ge=1, validation_alias="INITIAL_BACKFILL_HOURS")
+    binance_rest_base_url: str = Field(
+        default="https://api.binance.com",
+        validation_alias="BINANCE_REST_BASE_URL",
+    )
+    binance_rest_timeout_seconds: float = Field(
+        default=10.0,
+        gt=0,
+        validation_alias="BINANCE_REST_TIMEOUT_SECONDS",
+    )
+    binance_rest_retry_count: int = Field(
+        default=3,
+        ge=0,
+        validation_alias="BINANCE_REST_RETRY_COUNT",
+    )
     database_url: str = Field(
         default="postgresql+psycopg://binance:binance@postgres:5432/binance_assignment",
         validation_alias="DATABASE_URL",
@@ -20,6 +34,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        populate_by_name=True,
     )
 
     @property
