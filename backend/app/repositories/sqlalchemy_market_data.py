@@ -69,6 +69,16 @@ class SqlAlchemyMarketDataRepository:
             return None
         return candle.open_time
 
+    def get_first_open_time(self, symbol: str, interval: str) -> datetime | None:
+        statement = (
+            self._candles_for_symbol(symbol, interval).order_by(Candle.open_time.asc()).limit(1)
+        )
+        candle = self.session.execute(statement).scalar_one_or_none()
+        if candle is None:
+            return None
+        self._normalize_candle_datetimes(candle)
+        return candle.open_time
+
     def list_candles_by_symbol(self, symbol: str, interval: str, limit: int = 100) -> list[Candle]:
         statement = (
             self._candles_for_symbol(symbol, interval)
@@ -159,6 +169,13 @@ class SqlAlchemyMarketDataRepository:
         if job is not None:
             self._normalize_backfill_job_datetimes(job)
         return job
+
+    def list_recent_backfill_jobs(self, limit: int = 100) -> list[BackfillJob]:
+        statement = select(BackfillJob).order_by(BackfillJob.created_at.desc()).limit(limit)
+        jobs = list(self.session.execute(statement).scalars().all())
+        for job in jobs:
+            self._normalize_backfill_job_datetimes(job)
+        return jobs
 
     def append_application_event(self, event: ApplicationEventInput) -> ApplicationEvent:
         model = ApplicationEvent(

@@ -25,6 +25,9 @@ class MarketDataRepository(Protocol):
     def get_last_open_time(self, symbol: str, interval: str) -> datetime | None:
         pass
 
+    def get_first_open_time(self, symbol: str, interval: str) -> datetime | None:
+        pass
+
     def list_candles_by_symbol(self, symbol: str, interval: str, limit: int = 100) -> list[Candle]:
         pass
 
@@ -47,6 +50,9 @@ class MarketDataRepository(Protocol):
         pass
 
     def get_backfill_job(self, job_id: int) -> BackfillJob | None:
+        pass
+
+    def list_recent_backfill_jobs(self, limit: int = 100) -> list[BackfillJob]:
         pass
 
     def append_application_event(self, event: ApplicationEventInput) -> ApplicationEvent:

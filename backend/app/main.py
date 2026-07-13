@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.dashboard import router as dashboard_router
 from app.config import get_settings
 
 
@@ -9,6 +10,7 @@ def create_app() -> FastAPI:
         title="Binance Market Data Operations API",
         version="0.1.0",
     )
+    app.include_router(dashboard_router)
 
     @app.get("/health", tags=["health"])
     def health() -> dict[str, object]:

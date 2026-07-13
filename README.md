@@ -70,6 +70,18 @@ The WebSocket collector subscribes to combined Binance kline streams for configu
 
 The event history layer records operational events such as WebSocket connect/disconnect/reconnect, invalid messages, initial backfill completion, and restart recovery completion/failure. Event recording is best-effort so a temporary event-store failure does not stop collection or recovery.
 
+## Dashboard REST API
+
+Read-only dashboard endpoints:
+
+- `GET /api/health`
+- `GET /api/dashboard/summary`
+- `GET /api/dashboard/symbols`
+- `GET /api/dashboard/candles`
+- `GET /api/dashboard/gaps`
+- `GET /api/dashboard/backfill-jobs`
+- `GET /api/dashboard/events`
+
 ## Required Reading Before Work
 1. `PRODUCT.md`
 2. `AGENTS.md`

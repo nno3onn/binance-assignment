@@ -57,7 +57,9 @@ class GapDetectionService:
         end: datetime | None = None,
     ) -> GapDetectionResult:
         step = self._interval_step(interval)
-        scan_start = self._normalize(start)
+        scan_start = self._normalize(start) or self._repository.get_first_open_time(
+            symbol, interval
+        )
         scan_end = self._normalize(end) or self._runtime_scan_end(symbol, interval)
 
         if scan_start is None or scan_end is None or scan_start > scan_end:

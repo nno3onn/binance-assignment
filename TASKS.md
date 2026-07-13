@@ -124,7 +124,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
 
 ## Phase 7. Dashboard API and SSE
 
-- [ ] **T13 - Add dashboard REST API**
+- [x] **T13 - Add dashboard REST API**
   - Goal: Expose status, gaps, backfill jobs, market snapshot, and events.
   - Scope: FastAPI routers and contract tests.
   - Expected files: `backend/app/api/*`, `backend/tests/*`.
