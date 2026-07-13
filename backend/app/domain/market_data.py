@@ -21,6 +21,14 @@ class RuntimeStatus(StrEnum):
     ERROR = "ERROR"
 
 
+class ConnectionState(StrEnum):
+    CONNECTING = "CONNECTING"
+    CONNECTED = "CONNECTED"
+    RECONNECTING = "RECONNECTING"
+    DISCONNECTED = "DISCONNECTED"
+    STOPPED = "STOPPED"
+
+
 class BackfillJobType(StrEnum):
     INITIAL = "initial"
     RESTART_RECOVERY = "restart_recovery"

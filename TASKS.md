@@ -73,7 +73,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
 
 ## Phase 4. Binance WebSocket collection
 
-- [ ] **T08 - Add Binance WebSocket collector**
+- [x] **T08 - Add Binance WebSocket collector**
   - Goal: Collect live 1m kline updates for BTCUSDT and ETHUSDT.
   - Scope: WebSocket client, reconnect policy, mocked tests.
   - Expected files: `backend/app/binance/websocket.py`, `backend/app/services/collector.py`, `backend/tests/*`.
@@ -82,15 +82,15 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
   - Commit message: `feat: add binance websocket collector`
   - Prerequisites: T05.
 
-## Phase 5. Gap detection and recovery
+## Phase 5. Runtime status, gap detection, and recovery
 
-- [ ] **T09 - Implement gap detection**
-  - Goal: Detect missing 1m candle ranges per symbol.
-  - Scope: Gap scanner and tests.
-  - Expected files: `backend/app/services/gaps.py`, `backend/tests/*`.
-  - Done when: Intentional missing ranges are reported accurately.
+- [x] **T09 - Implement runtime status tracking**
+  - Goal: Track collector runtime state, symbol freshness, last event timestamps, and connection state.
+  - Scope: Runtime status service, collector runtime hooks, repository integration, unit tests.
+  - Expected files: `backend/app/services/status.py`, `backend/tests/*`, `backend/app/binance/websocket.py`.
+  - Done when: Collector can update runtime state through the service without calling repositories directly.
   - Verification: `make test`
-  - Commit message: `feat: add candle gap detection`
+  - Commit message: `feat: track collector runtime status`
   - Prerequisites: T05.
 
 - [ ] **T10 - Implement restart recovery backfill**
@@ -100,18 +100,18 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
   - Done when: Gap state moves BACKFILLING to LIVE and missing count becomes 0.
   - Verification: `make test`
   - Commit message: `feat: add restart gap recovery`
-  - Prerequisites: T06, T09.
+  - Prerequisites: T06, T11.
 
 ## Phase 6. Runtime status and event history
 
-- [ ] **T11 - Track symbol runtime status**
-  - Goal: Persist symbol health, last event time, lag, and collector state.
-  - Scope: Status service and tests.
-  - Expected files: `backend/app/services/status.py`, `backend/tests/*`.
-  - Done when: Status can represent INITIALIZING, LIVE, DEGRADED, BACKFILLING, STALE, ERROR.
+- [ ] **T11 - Implement gap detection**
+  - Goal: Detect missing 1m candle ranges per symbol.
+  - Scope: Gap scanner and tests.
+  - Expected files: `backend/app/services/gaps.py`, `backend/tests/*`.
+  - Done when: Intentional missing ranges are reported accurately.
   - Verification: `make test`
-  - Commit message: `feat: track symbol runtime status`
-  - Prerequisites: T05.
+  - Commit message: `feat: add candle gap detection`
+  - Prerequisites: T05, T09.
 
 - [ ] **T12 - Add event history**
   - Goal: Record operational events for disconnects, retries, backfills, gaps, and errors.

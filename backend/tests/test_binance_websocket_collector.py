@@ -86,6 +86,26 @@ class FakeConnector:
         return FakeWebSocketContext(self.connections.pop(0))
 
 
+class FakeRuntimeTracker:
+    def __init__(self) -> None:
+        self.opened: list[tuple[list[str], str]] = []
+        self.closed: list[tuple[list[str], str]] = []
+        self.klines: list[BinanceWebSocketKline] = []
+        self.invalid_count = 0
+
+    def mark_connection_opened(self, symbols: list[str], interval: str) -> None:
+        self.opened.append((symbols, interval))
+
+    def mark_connection_closed(self, symbols: list[str], interval: str) -> None:
+        self.closed.append((symbols, interval))
+
+    def record_kline(self, kline: BinanceWebSocketKline) -> None:
+        self.klines.append(kline)
+
+    def record_invalid_message(self) -> None:
+        self.invalid_count += 1
+
+
 async def _noop() -> None:
     return None
 
@@ -99,6 +119,7 @@ def build_collector(
     events: list[BinanceWebSocketKline],
     symbols: list[str] | None = None,
     retry_count: int = 3,
+    runtime_tracker: FakeRuntimeTracker | None = None,
 ) -> BinanceWebSocketCollector:
     return BinanceWebSocketCollector(
         base_url="wss://example.test",
@@ -106,6 +127,7 @@ def build_collector(
         interval="1m",
         on_kline=events.append,
         connector=connector,
+        runtime_tracker=runtime_tracker,
         sleep=_sleep,
         keepalive_seconds=30,
         retry_count=retry_count,
@@ -185,3 +207,17 @@ def test_collector_receives_two_symbols() -> None:
 
     assert [event.symbol for event in events] == ["BTCUSDT", "ETHUSDT"]
     assert connector.urls == ["wss://example.test/stream?streams=btcusdt@kline_1m/ethusdt@kline_1m"]
+
+
+def test_collector_updates_runtime_tracker_without_repository_access() -> None:
+    events: list[BinanceWebSocketKline] = []
+    runtime_tracker = FakeRuntimeTracker()
+    connector = FakeConnector([FakeWebSocket(["not-json", kline_message()])])
+    collector = build_collector(connector, events, runtime_tracker=runtime_tracker)
+
+    run_async(collector.run(max_events=1))
+
+    assert runtime_tracker.opened == [(["BTCUSDT"], "1m")]
+    assert runtime_tracker.closed == [(["BTCUSDT"], "1m")]
+    assert runtime_tracker.invalid_count == 1
+    assert [event.symbol for event in runtime_tracker.klines] == ["BTCUSDT"]

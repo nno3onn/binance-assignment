@@ -45,6 +45,20 @@ class WebSocketConnector(Protocol):
         pass
 
 
+class CollectorRuntimeTracker(Protocol):
+    def mark_connection_opened(self, symbols: list[str], interval: str) -> Awaitable[None] | None:
+        pass
+
+    def mark_connection_closed(self, symbols: list[str], interval: str) -> Awaitable[None] | None:
+        pass
+
+    def record_kline(self, kline: BinanceWebSocketKline) -> Awaitable[None] | None:
+        pass
+
+    def record_invalid_message(self) -> Awaitable[None] | None:
+        pass
+
+
 KlineHandler = Callable[[BinanceWebSocketKline], Awaitable[None] | None]
 Sleep = Callable[[float], Awaitable[None]]
 
@@ -58,6 +72,7 @@ class BinanceWebSocketCollector:
         interval: str,
         on_kline: KlineHandler,
         connector: WebSocketConnector | None = None,
+        runtime_tracker: CollectorRuntimeTracker | None = None,
         sleep: Sleep = asyncio.sleep,
         keepalive_seconds: float = 30.0,
         retry_count: int = 3,
@@ -67,6 +82,7 @@ class BinanceWebSocketCollector:
         self._interval = interval
         self._on_kline = on_kline
         self._connector = connector or self._connect
+        self._runtime_tracker = runtime_tracker
         self._sleep = sleep
         self._keepalive_seconds = keepalive_seconds
         self._retry_count = retry_count
@@ -104,12 +120,15 @@ class BinanceWebSocketCollector:
         emitted_this_connection = 0
         async with self._connector(self.stream_url()) as websocket:
             self._active_connection = websocket
+            await self._call_runtime_tracker(
+                "mark_connection_opened", self._symbols, self._interval
+            )
             keepalive_task = asyncio.create_task(self._keepalive(websocket))
             try:
                 while not self._stopped.is_set():
                     try:
                         raw_message = await websocket.recv()
-                    except (ConnectionError, TimeoutError, OSError, asyncio.TimeoutError):
+                    except (ConnectionError, TimeoutError, OSError):
                         if emitted_this_connection > 0:
                             return emitted_this_connection
                         raise
@@ -119,8 +138,10 @@ class BinanceWebSocketCollector:
                         expected_interval=self._interval,
                     )
                     if kline is None:
+                        await self._call_runtime_tracker("record_invalid_message")
                         continue
 
+                    await self._call_runtime_tracker("record_kline", kline)
                     result = self._on_kline(kline)
                     if inspect.isawaitable(result):
                         await result
@@ -133,6 +154,9 @@ class BinanceWebSocketCollector:
                         return emitted_this_connection
             finally:
                 keepalive_task.cancel()
+                await self._call_runtime_tracker(
+                    "mark_connection_closed", self._symbols, self._interval
+                )
                 self._active_connection = None
                 try:
                     await keepalive_task
@@ -151,6 +175,14 @@ class BinanceWebSocketCollector:
     @staticmethod
     def _connect(url: str) -> Any:
         return connect(url, ping_interval=None)
+
+    async def _call_runtime_tracker(self, method_name: str, *args: object) -> None:
+        if self._runtime_tracker is None:
+            return
+        method = getattr(self._runtime_tracker, method_name)
+        result = method(*args)
+        if inspect.isawaitable(result):
+            await result
 
     @staticmethod
     def _backoff_seconds(attempt: int) -> float:
