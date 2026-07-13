@@ -144,7 +144,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
 
 ## Phase 8. Frontend operations console
 
-- [ ] **T15 - Build operations dashboard layout**
+- [x] **T15 - Build operations dashboard layout**
   - Goal: Implement dashboard shell focused on pipeline health.
   - Scope: Cards, tables, timelines, charts using API fixtures or typed clients.
   - Expected files: `frontend/app/*`, `frontend/components/*`, `docs/06-dashboard-design.md`.

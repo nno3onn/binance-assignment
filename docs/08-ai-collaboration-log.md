@@ -18,6 +18,7 @@ Record AI-generated changes and human verification here. Keep entries short.
 | 2026-07-14 | T12 | Added event history service, recent event reads, event type/severity definitions, and minimal hooks for WebSocket, initial backfill, and recovery. | `make check` passed. | Complete |
 | 2026-07-14 | T13 | Added read-only dashboard REST API endpoints, response schemas, query validation, and dashboard query service. | `make check` passed. | Complete |
 | 2026-07-14 | T14 | Added dashboard SSE stream endpoint with snapshot, heartbeat, error frames, and disconnect-aware generator tests. | `make check` passed. | Complete |
+| 2026-07-14 | T15 | Built fixture-based operations dashboard layout with reusable UI components, Recharts panel, responsive sections, and component tests. | `make check` passed. | Complete |
 
 ## Rule
 After each completed Task, append one row describing what AI changed and how it was verified.

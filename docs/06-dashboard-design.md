@@ -25,7 +25,12 @@
 ## Update Rule
 Dashboard widgets must match API contracts and tests.
 
+## T15 Layout Decision
+- Primary row: system health, symbol health, and API/DB health.
+- Secondary row: data freshness and source mix.
+- Operational tables: symbol pipeline, gap detector, backfill timeline, and event log.
+- Market chart is intentionally secondary and fixture-based until API/SSE wiring.
+- Health colors use text badges with labels, not color-only status.
+
 ## Open Decisions
-- Exact visual hierarchy after frontend implementation starts.
-- Chart time windows.
-- Color tokens for health states.
+- Live chart time windows after API integration.
