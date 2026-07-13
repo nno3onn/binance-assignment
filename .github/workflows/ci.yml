@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Docker Compose config
+        run: docker compose config
+
+      - name: Backend lint/typecheck/test placeholder
+        run: |
+          echo "TODO T02/T04+: activate backend lint, typecheck, and tests once backend scaffold exists."
+          if [ -f backend/pyproject.toml ]; then
+            echo "Backend scaffold exists but CI command is still placeholder." >&2
+            exit 1
+          fi
+
+      - name: Frontend lint/typecheck/test/build placeholder
+        run: |
+          echo "TODO T03/T16+: activate frontend lint, typecheck, tests, and build once frontend scaffold exists."
+          if [ -f frontend/package.json ]; then
+            echo "Frontend scaffold exists but CI command is still placeholder." >&2
+            exit 1
+          fi

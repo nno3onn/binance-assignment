@@ -13,7 +13,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
   - Commit message: `chore: add project harness`
   - Prerequisites: None.
 
-- [ ] **T02 - Scaffold backend project**
+- [x] **T02 - Scaffold backend project**
   - Goal: Create minimal FastAPI package structure and dependency metadata.
   - Scope: Backend app entrypoint, config module, test skeleton, lint/typecheck/test commands.
   - Expected files: `backend/pyproject.toml`, `backend/app/main.py`, `backend/app/config.py`, `backend/tests/*`.

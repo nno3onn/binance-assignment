@@ -13,6 +13,7 @@ First incomplete Task: `T02 - Scaffold backend project`.
 
 ## Stack
 - Backend: FastAPI, PostgreSQL.
+- Python: 3.12 managed by uv.
 - Frontend: Next.js App Router, TypeScript, Tailwind CSS, TanStack Query, Recharts.
 - Realtime: Binance WebSocket, dashboard SSE.
 - Backfill: Binance REST API.
@@ -35,7 +36,7 @@ make reset-db
 make recovery-drill
 ```
 
-At the harness stage, most commands are guarded placeholders that explain the Task that will activate them. They must not be treated as application validation until the linked Task is complete.
+At the current stage, backend lint, typecheck, and tests are active. Frontend, smoke, database reset, and recovery drill commands remain guarded placeholders until their linked Tasks are complete.
 
 ## Required Reading Before Work
 1. `PRODUCT.md`

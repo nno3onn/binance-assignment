@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-binance}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-binance}
+      POSTGRES_DB: ${POSTGRES_DB:-binance_assignment}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-binance} -d ${POSTGRES_DB:-binance_assignment}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    image: alpine:3.20
+    profiles: ["app"]
+    command: ["sh", "-c", "echo 'TODO T02: replace with FastAPI backend service' && sleep infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.example
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+
+  frontend:
+    image: alpine:3.20
+    profiles: ["app"]
+    command: ["sh", "-c", "echo 'TODO T03: replace with Next.js frontend service' && sleep infinity"]
+    env_file:
+      - .env.example
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+volumes:
+  postgres-data:
