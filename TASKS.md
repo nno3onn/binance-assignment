@@ -133,7 +133,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
   - Commit message: `feat: add dashboard api endpoints`
   - Prerequisites: T10, T12.
 
-- [ ] **T14 - Add SSE stream**
+- [x] **T14 - Add SSE stream**
   - Goal: Stream status/event updates to the dashboard.
   - Scope: SSE endpoint and tests.
   - Expected files: `backend/app/api/stream.py`, `backend/tests/*`.

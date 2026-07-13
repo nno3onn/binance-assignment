@@ -81,6 +81,7 @@ Read-only dashboard endpoints:
 - `GET /api/dashboard/gaps`
 - `GET /api/dashboard/backfill-jobs`
 - `GET /api/dashboard/events`
+- `GET /api/dashboard/stream` for SSE dashboard snapshots and heartbeat events
 
 ## Required Reading Before Work
 1. `PRODUCT.md`

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.api.dashboard import router as dashboard_router
+from app.api.stream import router as stream_router
 from app.config import get_settings
 
 
@@ -11,6 +12,7 @@ def create_app() -> FastAPI:
         version="0.1.0",
     )
     app.include_router(dashboard_router)
+    app.include_router(stream_router)
 
     @app.get("/health", tags=["health"])
     def health() -> dict[str, object]:

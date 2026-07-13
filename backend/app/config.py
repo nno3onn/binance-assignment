@@ -39,6 +39,16 @@ class Settings(BaseSettings):
         ge=0,
         validation_alias="BINANCE_WS_RETRY_COUNT",
     )
+    dashboard_sse_interval_seconds: float = Field(
+        default=5.0,
+        gt=0,
+        validation_alias="DASHBOARD_SSE_INTERVAL_SECONDS",
+    )
+    dashboard_sse_heartbeat_seconds: float = Field(
+        default=15.0,
+        gt=0,
+        validation_alias="DASHBOARD_SSE_HEARTBEAT_SECONDS",
+    )
     database_url: str = Field(
         default="postgresql+psycopg://binance:binance@postgres:5432/binance_assignment",
         validation_alias="DATABASE_URL",

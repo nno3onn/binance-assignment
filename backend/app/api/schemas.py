@@ -113,3 +113,12 @@ class ApplicationEventResponse(BaseModel):
 
 class EventsResponse(BaseModel):
     events: list[ApplicationEventResponse]
+
+
+class DashboardStreamPayload(BaseModel):
+    event_type: str
+    emitted_at: datetime
+    system_health: str
+    symbols: list[SymbolStatusResponse]
+    active_gap_count: int
+    latest_backfill_status: str | None
