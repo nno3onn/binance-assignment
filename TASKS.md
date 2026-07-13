@@ -104,7 +104,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
 
 ## Phase 6. Runtime status and event history
 
-- [ ] **T11 - Implement gap detection**
+- [x] **T11 - Implement gap detection**
   - Goal: Detect missing 1m candle ranges per symbol.
   - Scope: Gap scanner and tests.
   - Expected files: `backend/app/services/gaps.py`, `backend/tests/*`.
