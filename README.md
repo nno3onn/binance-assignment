@@ -14,7 +14,8 @@ First incomplete Task: `T02 - Scaffold backend project`.
 ## Stack
 - Backend: FastAPI, PostgreSQL.
 - Python: 3.12 managed by uv.
-- Frontend: Next.js App Router, TypeScript, Tailwind CSS, TanStack Query, Recharts.
+- Frontend: Next.js App Router, TypeScript, Tailwind CSS, TanStack Query, Zustand, Recharts.
+- Frontend tests: Vitest.
 - Realtime: Binance WebSocket, dashboard SSE.
 - Backfill: Binance REST API.
 - Runtime: Docker Compose.
@@ -36,7 +37,7 @@ make reset-db
 make recovery-drill
 ```
 
-At the current stage, backend lint, typecheck, and tests are active. Frontend, smoke, database reset, and recovery drill commands remain guarded placeholders until their linked Tasks are complete.
+At the current stage, backend and frontend lint, typecheck, tests, and frontend build are active. Smoke, database reset, and recovery drill commands remain guarded placeholders until their linked Tasks are complete.
 
 ## Required Reading Before Work
 1. `PRODUCT.md`

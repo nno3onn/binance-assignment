@@ -17,6 +17,7 @@
 - Backend package manager: uv.
 - Backend Python version: 3.12.
 - Frontend test runner: Vitest.
+- Frontend lint/format: ESLint and Prettier.
 
 ## Update Rule
 Every new behavior needs a corresponding test or an explicit documented reason.

@@ -22,7 +22,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
   - Commit message: `chore: scaffold backend application`
   - Prerequisites: T01.
 
-- [ ] **T03 - Scaffold frontend project**
+- [x] **T03 - Scaffold frontend project**
   - Goal: Create minimal Next.js App Router project with dashboard shell placeholder.
   - Scope: Frontend package metadata, app shell, lint/typecheck/test/build commands.
   - Expected files: `frontend/package.json`, `frontend/app/*`, `frontend/tests/*`.

@@ -43,32 +43,32 @@ run_backend_test() {
 
 run_frontend_lint() {
   if [[ -f frontend/package.json ]]; then
-    echo "TODO T03: run frontend lint command from package.json"
-    return 1
+    (cd frontend && npm run lint)
+    return 0
   fi
   echo "SKIP frontend lint: frontend scaffold not created yet (activates in T03)."
 }
 
 run_frontend_typecheck() {
   if [[ -f frontend/package.json ]]; then
-    echo "TODO T03: run frontend typecheck command from package.json"
-    return 1
+    (cd frontend && npm run typecheck)
+    return 0
   fi
   echo "SKIP frontend typecheck: frontend scaffold not created yet (activates in T03)."
 }
 
 run_frontend_test() {
   if [[ -f frontend/package.json ]]; then
-    echo "TODO T03/T16+: run frontend tests."
-    return 1
+    (cd frontend && npm run test)
+    return 0
   fi
   echo "SKIP frontend test: frontend scaffold not created yet (activates in T03)."
 }
 
 run_frontend_build() {
   if [[ -f frontend/package.json ]]; then
-    echo "TODO T03: run frontend build command from package.json"
-    return 1
+    (cd frontend && npm run build)
+    return 0
   fi
   echo "SKIP frontend build: frontend scaffold not created yet (activates in T03)."
 }
