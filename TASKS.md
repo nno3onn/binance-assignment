@@ -33,7 +33,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
 
 ## Phase 2. Database and domain model
 
-- [ ] **T04 - Add database migrations**
+- [x] **T04 - Add database migrations**
   - Goal: Define PostgreSQL schema for candles, runtime status, backfill jobs, and event history.
   - Scope: Migration tooling and schema only.
   - Expected files: `backend/migrations/*`, `docs/05-storage-design.md`.

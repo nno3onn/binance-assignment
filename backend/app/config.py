@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     symbols: str = Field(default="BTCUSDT,ETHUSDT", validation_alias="SYMBOLS")
     candle_interval: Literal["1m"] = Field(default="1m", validation_alias="CANDLE_INTERVAL")
     initial_backfill_hours: int = Field(default=24, ge=1, validation_alias="INITIAL_BACKFILL_HOURS")
+    database_url: str = Field(
+        default="postgresql+psycopg://binance:binance@postgres:5432/binance_assignment",
+        validation_alias="DATABASE_URL",
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",

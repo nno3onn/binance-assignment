@@ -39,6 +39,21 @@ make recovery-drill
 
 At the current stage, backend and frontend lint, typecheck, tests, and frontend build are active. Smoke, database reset, and recovery drill commands remain guarded placeholders until their linked Tasks are complete.
 
+## Database Migrations
+
+Backend migrations use Alembic and target PostgreSQL. During local unit tests they are also exercised against temporary SQLite databases so migration up, down, and re-run behavior can be verified without Docker.
+
+From `backend/`:
+
+```sh
+uv run alembic upgrade head
+uv run alembic downgrade base
+```
+
+## Persistence Layer
+
+The backend repository layer uses SQLAlchemy ORM models and keeps candle writes idempotent with the `symbol + interval + open_time` identity. Repository unit tests run against SQLite and avoid PostgreSQL-only SQL in the public repository API.
+
 ## Required Reading Before Work
 1. `PRODUCT.md`
 2. `AGENTS.md`
