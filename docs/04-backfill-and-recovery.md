@@ -7,6 +7,8 @@
 - Restart recovery scans for missing 1m ranges and fills them through REST.
 - Backfill jobs are recorded with type, symbol, interval, range, status, counts, and errors.
 - Candle writes are idempotent, so repeated backfill is safe.
+- Restart recovery consumes gap detection results and only requests/restores missing gap ranges.
+- Restart recovery writes recovered candles with `source=rest_backfill` through repository bulk upsert.
 
 ## Recovery Flow
 

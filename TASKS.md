@@ -93,7 +93,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
   - Commit message: `feat: track collector runtime status`
   - Prerequisites: T05.
 
-- [ ] **T10 - Implement restart recovery backfill**
+- [x] **T10 - Implement restart recovery backfill**
   - Goal: Recover gaps after downtime through REST backfill.
   - Scope: Recovery service, backfill job linkage, tests.
   - Expected files: `backend/app/services/recovery.py`, `backend/tests/*`, `docs/04-backfill-and-recovery.md`.

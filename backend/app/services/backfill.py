@@ -18,6 +18,23 @@ from app.repositories.interfaces import MarketDataRepository
 BINANCE_KLINES_MAX_LIMIT = 1000
 
 
+def kline_to_rest_backfill_candle(symbol: str, interval: str, kline: BinanceKline) -> CandleInput:
+    return CandleInput(
+        symbol=symbol,
+        interval=interval,
+        open_time=kline.open_time,
+        close_time=kline.close_time,
+        open_price=kline.open_price,
+        high_price=kline.high_price,
+        low_price=kline.low_price,
+        close_price=kline.close_price,
+        volume=kline.volume,
+        quote_volume=kline.quote_volume,
+        trade_count=kline.trade_count,
+        source=CandleSource.REST_BACKFILL,
+    )
+
+
 @dataclass(frozen=True)
 class InitialBackfillResult:
     symbol: str
@@ -83,7 +100,7 @@ class InitialBackfillService:
                 finished_at=range_end,
             )
         )
-        candles = [self._to_candle_input(symbol, self._interval, kline) for kline in klines]
+        candles = [kline_to_rest_backfill_candle(symbol, self._interval, kline) for kline in klines]
         self._repository.bulk_upsert_candles(candles)
 
         return InitialBackfillResult(
@@ -103,20 +120,3 @@ class InitialBackfillService:
     @staticmethod
     def _to_milliseconds(value: datetime) -> int:
         return int(value.timestamp() * 1000)
-
-    @staticmethod
-    def _to_candle_input(symbol: str, interval: str, kline: BinanceKline) -> CandleInput:
-        return CandleInput(
-            symbol=symbol,
-            interval=interval,
-            open_time=kline.open_time,
-            close_time=kline.close_time,
-            open_price=kline.open_price,
-            high_price=kline.high_price,
-            low_price=kline.low_price,
-            close_price=kline.close_price,
-            volume=kline.volume,
-            quote_volume=kline.quote_volume,
-            trade_count=kline.trade_count,
-            source=CandleSource.REST_BACKFILL,
-        )
