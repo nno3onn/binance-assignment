@@ -25,6 +25,20 @@ class Settings(BaseSettings):
         ge=0,
         validation_alias="BINANCE_REST_RETRY_COUNT",
     )
+    binance_ws_base_url: str = Field(
+        default="wss://stream.binance.com:9443",
+        validation_alias="BINANCE_WS_BASE_URL",
+    )
+    binance_ws_keepalive_seconds: float = Field(
+        default=30.0,
+        gt=0,
+        validation_alias="BINANCE_WS_KEEPALIVE_SECONDS",
+    )
+    binance_ws_retry_count: int = Field(
+        default=3,
+        ge=0,
+        validation_alias="BINANCE_WS_RETRY_COUNT",
+    )
     database_url: str = Field(
         default="postgresql+psycopg://binance:binance@postgres:5432/binance_assignment",
         validation_alias="DATABASE_URL",
