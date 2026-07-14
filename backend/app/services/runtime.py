@@ -21,6 +21,8 @@ from app.domain.market_data import CandleInput, CandleSource, RuntimeStatus, Run
 from app.repositories.sqlalchemy_market_data import SqlAlchemyMarketDataRepository
 from app.services.backfill import InitialBackfillService
 from app.services.events import EventHistoryService
+from app.services.gaps import GapDetectionService
+from app.services.recovery import RestartRecoveryService
 from app.services.status import RuntimeStatusService
 
 SessionFactory = Callable[[], Session]
@@ -70,7 +72,7 @@ class MarketDataRuntime:
         self._collector_task: asyncio.Task[None] | None = None
 
     async def start(self) -> None:
-        await asyncio.to_thread(self._run_initial_backfill)
+        await asyncio.to_thread(self._run_startup_backfill_and_recovery)
         self._collector = self._build_collector()
         self._collector_task = asyncio.create_task(self._collector.run())
 
@@ -97,7 +99,7 @@ class MarketDataRuntime:
             RuntimeStatusService(repository).record_kline(kline)
             session.commit()
 
-    def _run_initial_backfill(self) -> None:
+    def _run_startup_backfill_and_recovery(self) -> None:
         rest_client = self._build_rest_client()
         try:
             with self.session_factory() as session:
@@ -125,6 +127,31 @@ class MarketDataRuntime:
                     initial_backfill_hours=self.settings.initial_backfill_hours,
                     event_history=event_history,
                 ).run()
+
+                recovery_started_at = datetime.now(tz=UTC)
+                for symbol in self.settings.symbol_list:
+                    latest = repository.get_latest_candle(symbol, self.settings.candle_interval)
+                    if latest is not None:
+                        repository.save_runtime_status(
+                            RuntimeStatusInput(
+                                symbol=symbol,
+                                interval=self.settings.candle_interval,
+                                status=RuntimeStatus.BACKFILLING,
+                                last_event_at=recovery_started_at,
+                                last_candle_open_time=latest.open_time,
+                                lag_seconds=0,
+                            )
+                        )
+
+                RestartRecoveryService(
+                    repository=repository,
+                    binance_rest_client=rest_client,
+                    gap_detection_service=GapDetectionService(repository),
+                    event_history=event_history,
+                ).recover_symbols(
+                    self.settings.symbol_list,
+                    self.settings.candle_interval,
+                )
 
                 now = datetime.now(tz=UTC)
                 for symbol in self.settings.symbol_list:

@@ -239,3 +239,53 @@ def test_startup_skips_initial_backfill_when_candles_exist() -> None:
         pass
 
     assert rest_client.kline_calls == []
+
+
+def test_startup_runs_restart_recovery_for_existing_gap() -> None:
+    factory = build_session_factory()
+    start = datetime(2026, 7, 14, 0, 0, tzinfo=UTC)
+    with factory() as session:
+        repository = SqlAlchemyMarketDataRepository(session)
+        repository.upsert_candle(candle("BTCUSDT", start))
+        repository.upsert_candle(candle("BTCUSDT", start + timedelta(minutes=2)))
+        repository.upsert_candle(candle("ETHUSDT", start))
+        session.commit()
+
+    rest_client = FakeRestClient()
+
+    def runtime_factory() -> MarketDataRuntime:
+        def collector_factory(
+            on_kline: Callable[[BinanceWebSocketKline], None],
+            runtime_tracker: CollectorRuntimeTracker,
+            event_history: CollectorEventHistory,
+        ) -> FakeCollector:
+            return FakeCollector(on_kline, runtime_tracker, event_history, ws_kline("BTCUSDT"))
+
+        from app.config import Settings
+
+        return MarketDataRuntime(
+            settings=Settings(database_url="sqlite://"),
+            session_factory=factory,
+            rest_client_factory=lambda: rest_client,
+            collector_factory=collector_factory,
+        )
+
+    app = create_app(enable_runtime=True, runtime_factory=runtime_factory)
+    with TestClient(app):
+        with factory() as session:
+            repository = SqlAlchemyMarketDataRepository(session)
+            btc_candles = repository.list_candles_by_symbol("BTCUSDT", "1m", limit=10)
+            eth_candles = repository.list_candles_by_symbol("ETHUSDT", "1m", limit=10)
+            btc_status = repository.get_runtime_status("BTCUSDT", "1m")
+            events = repository.list_recent_application_events(limit=20)
+
+    assert rest_client.kline_calls == ["BTCUSDT"]
+    assert {item.open_time for item in btc_candles}.issuperset(
+        {start, start + timedelta(minutes=1), start + timedelta(minutes=2)}
+    )
+    recovered_open_time = start + timedelta(minutes=1)
+    assert len([item for item in btc_candles if item.open_time == recovered_open_time]) == 1
+    assert len(eth_candles) == 1
+    assert btc_status is not None
+    assert btc_status.status == RuntimeStatus.LIVE.value
+    assert any(event.event_type == "recovery_completed" for event in events)

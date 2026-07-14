@@ -12,7 +12,7 @@ def build_engine() -> Engine:
 
 
 engine = build_engine()
-SessionLocal = sessionmaker(bind=engine)
+SessionLocal = sessionmaker(bind=engine, autoflush=False)
 
 
 def get_db_session() -> Iterator[Session]:
