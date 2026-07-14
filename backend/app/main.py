@@ -1,16 +1,46 @@
+from collections.abc import AsyncIterator, Callable
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.dashboard import router as dashboard_router
 from app.api.stream import router as stream_router
 from app.config import get_settings
+from app.database import SessionLocal
+from app.services.runtime import MarketDataRuntime
+
+RuntimeFactory = Callable[[], MarketDataRuntime]
 
 
-def create_app() -> FastAPI:
+def build_runtime() -> MarketDataRuntime:
+    return MarketDataRuntime(settings=get_settings(), session_factory=SessionLocal)
+
+
+def create_app(
+    *,
+    enable_runtime: bool = True,
+    runtime_factory: RuntimeFactory = build_runtime,
+) -> FastAPI:
     settings = get_settings()
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        runtime: MarketDataRuntime | None = None
+        if enable_runtime:
+            runtime = runtime_factory()
+            app.state.market_data_runtime = runtime
+            await runtime.start()
+        try:
+            yield
+        finally:
+            if runtime is not None:
+                await runtime.stop()
+
     app = FastAPI(
         title="Binance Market Data Operations API",
         version="0.1.0",
+        lifespan=lifespan,
     )
     app.add_middleware(
         CORSMiddleware,

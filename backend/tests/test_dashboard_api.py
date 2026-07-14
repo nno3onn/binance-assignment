@@ -88,7 +88,7 @@ def repository(session: Session) -> SqlAlchemyMarketDataRepository:
 
 @pytest.fixture()
 def client(repository: SqlAlchemyMarketDataRepository) -> Iterator[TestClient]:
-    app = create_app()
+    app = create_app(enable_runtime=False)
     app.dependency_overrides[get_repository] = lambda: repository
     with TestClient(app) as test_client:
         yield test_client

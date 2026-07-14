@@ -8,7 +8,7 @@ from app.main import create_app
 
 
 def test_health_endpoint_returns_backend_boot_status() -> None:
-    client = TestClient(create_app())
+    client = TestClient(create_app(enable_runtime=False))
 
     response = client.get("/health")
 
@@ -98,7 +98,7 @@ def test_settings_os_environment_overrides_env_file(monkeypatch: MonkeyPatch) ->
 def test_cors_preflight_allows_configured_local_origin(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
     get_settings.cache_clear()
-    client = TestClient(create_app())
+    client = TestClient(create_app(enable_runtime=False))
 
     response = client.options(
         "/api/dashboard/stream",
@@ -119,7 +119,7 @@ def test_cors_preflight_allows_configured_local_origin(monkeypatch: MonkeyPatch)
 def test_cors_get_response_allows_configured_local_origin(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
     get_settings.cache_clear()
-    client = TestClient(create_app())
+    client = TestClient(create_app(enable_runtime=False))
 
     response = client.get("/api/health", headers={"Origin": "http://127.0.0.1:3000"})
 
@@ -132,7 +132,7 @@ def test_cors_get_response_allows_configured_local_origin(monkeypatch: MonkeyPat
 def test_cors_get_response_does_not_allow_unconfigured_origin(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:3000")
     get_settings.cache_clear()
-    client = TestClient(create_app())
+    client = TestClient(create_app(enable_runtime=False))
 
     response = client.get("/api/health", headers={"Origin": "https://example.com"})
 
