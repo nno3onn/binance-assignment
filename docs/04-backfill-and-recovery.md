@@ -32,7 +32,18 @@ sequenceDiagram
 ```
 
 ## Drill Contract
-`scripts/recovery-drill.sh` must eventually prove gap creation, detection, REST repair, LIVE recovery, zero missing candles, and zero duplicates.
+`scripts/recovery-drill.sh` proves gap creation, detection, REST repair, LIVE recovery, zero missing candles, and zero duplicates against a running system.
+
+The drill:
+- checks backend, frontend, SSE, and DB readiness;
+- records starting latest candle, row count, and duplicate count;
+- injects a real gap by deleting recent completed candles for `DRILL_SYMBOL`;
+- verifies the dashboard gap API reports missing candles;
+- triggers recovery via `DRILL_RECOVERY_TRIGGER_URL` or `DRILL_RECOVERY_COMMAND`;
+- waits for a `restart_recovery` job to complete;
+- verifies missing count returns to 0, symbol status returns to LIVE, recovery events exist, and duplicate rows remain 0.
+
+The script requires either host `psql` with `DATABASE_URL` or Docker Compose access to the `postgres` service. Collector pause/resume controls are optional through `DRILL_COLLECTOR_PAUSE_URL` and `DRILL_COLLECTOR_RESUME_URL`; without them, the drill uses deterministic DB gap injection and reports the collector control step as skipped.
 
 ## Update Rule
 Any recovery behavior change must update this document and the drill.

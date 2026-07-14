@@ -21,6 +21,7 @@ Record AI-generated changes and human verification here. Keep entries short.
 | 2026-07-14 | T15 | Built fixture-based operations dashboard layout with reusable UI components, Recharts panel, responsive sections, and component tests. | `make check` passed. | Complete |
 | 2026-07-14 | T16 | Connected frontend dashboard to REST hydration and EventSource SSE updates with connection-state UI and realtime client tests. | `make lint && make typecheck && make test && make build && make check` passed. | Complete |
 | 2026-07-14 | T17 | Implemented HTTP smoke test for backend health, dashboard APIs, candles, SSE, and frontend page checks. | `bash -n scripts/smoke.sh`, mock HTTP smoke, invalid URL failure check, and `make check` passed. | Complete |
+| 2026-07-14 | T18 | Implemented recovery drill script for DB gap injection, gap detection, recovery trigger verification, duplicate checks, and result reporting. | `bash -n scripts/recovery-drill.sh` and `make check` passed; local `make recovery-drill` correctly failed without DB client/services. | Complete |
 
 ## Rule
 After each completed Task, append one row describing what AI changed and how it was verified.

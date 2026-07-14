@@ -7,9 +7,9 @@ Dashboard statement:
 > “이 화면은 코인 가격을 조회하는 화면이 아니라, Binance market data pipeline이 정상적으로 수집, 저장, 탐지, 복구되고 있는지 확인하는 운영 콘솔이다.”
 
 ## Current Status
-Backend data, dashboard API, SSE stream, and frontend operations console are implemented through T16.
+Backend data flow, dashboard API, SSE stream, frontend operations console, smoke test, and recovery drill automation are implemented through T18.
 
-First incomplete Task: `T17 - Implement smoke test`.
+First incomplete Task: `T19 - Finalize README and reviewer docs`.
 
 ## Stack
 - Backend: FastAPI, PostgreSQL.
@@ -37,7 +37,7 @@ make reset-db
 make recovery-drill
 ```
 
-At the current stage, backend and frontend lint, typecheck, tests, and frontend build are active. `make smoke` is active and verifies already-running backend/frontend services. Database reset and recovery drill commands remain guarded placeholders until their linked Tasks are complete.
+At the current stage, backend and frontend lint, typecheck, tests, and frontend build are active. `make smoke` and `make recovery-drill` verify already-running services. Database reset remains a guarded placeholder until its linked work is completed.
 
 ## Database Migrations
 
@@ -112,6 +112,28 @@ make smoke
 ```
 
 The script requires `curl` and `python3`, does not require `jq`, and fails fast with `[FAIL]` when a required endpoint or data condition is missing.
+
+## Recovery Drill
+
+`make recovery-drill` verifies a running system by injecting a real candle gap, waiting for dashboard gap detection, triggering restart recovery, and checking that gaps return to 0 with no duplicate `(symbol, interval, open_time)` rows.
+
+Required runtime conditions:
+- backend, frontend, and PostgreSQL are already running;
+- recent BTCUSDT/ETHUSDT candles exist;
+- DB access is available through host `psql` plus `DATABASE_URL`, or through Docker Compose `postgres`;
+- recovery can be triggered through `DRILL_RECOVERY_TRIGGER_URL` or `DRILL_RECOVERY_COMMAND`.
+
+Example:
+
+```sh
+DATABASE_URL=postgresql://binance:binance@localhost:5432/binance_assignment \
+DRILL_SYMBOL=BTCUSDT \
+DRILL_GAP_SECONDS=70 \
+DRILL_RECOVERY_TRIGGER_URL=http://localhost:8000/<test-only-recovery-trigger> \
+make recovery-drill
+```
+
+If the recovery trigger is not configured, the drill fails with `[FAIL]` rather than claiming success.
 
 ## Required Reading Before Work
 1. `PRODUCT.md`

@@ -173,7 +173,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
   - Commit message: `test: add smoke verification script`
   - Prerequisites: T13, T16.
 
-- [ ] **T18 - Implement recovery drill**
+- [x] **T18 - Implement recovery drill**
   - Goal: Reproduce collector downtime, gap detection, REST recovery, and duplicate checks.
   - Scope: `scripts/recovery-drill.sh` real scenario.
   - Expected files: `scripts/recovery-drill.sh`, `docs/04-backfill-and-recovery.md`, `docs/09-reviewer-walkthrough.md`.
