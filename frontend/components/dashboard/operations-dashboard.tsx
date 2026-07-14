@@ -54,6 +54,7 @@ type OperationsDashboardProps = {
 };
 
 const symbols: Array<SymbolStatus["symbol"]> = ["BTCUSDT", "ETHUSDT"];
+const EVENT_PAGE_SIZE = 5;
 
 export function OperationsDashboard({
   data,
@@ -716,6 +717,11 @@ function RecentCandleChart({
 }
 
 function RecentEventLog({ events }: { events: ApplicationEvent[] }) {
+  const [visibleCount, setVisibleCount] = useState(EVENT_PAGE_SIZE);
+  const visibleEvents = events.slice(0, visibleCount);
+  const hiddenCount = Math.max(events.length - visibleCount, 0);
+  const nextCount = Math.min(EVENT_PAGE_SIZE, hiddenCount);
+
   return (
     <Section
       title="최근 이벤트"
@@ -731,34 +737,49 @@ function RecentEventLog({ events }: { events: ApplicationEvent[] }) {
             />
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {events.map((event) => (
-              <div key={event.id} className="relative p-4 pl-10">
-                <div className="absolute left-5 top-0 h-full w-px bg-slate-200" />
-                <div
-                  className={`absolute left-[15px] top-5 h-3 w-3 rounded-full border-2 border-white shadow-sm ${severityDotClass(
-                    event.severity
-                  )}`}
-                />
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <SeverityBadge severity={event.severity} />
-                      <h3 className="text-sm font-semibold text-slate-950">
-                        {eventTypeLabel(event.event_type)}
-                      </h3>
+          <>
+            <div className="divide-y divide-slate-100">
+              {visibleEvents.map((event) => (
+                <div key={event.id} className="relative p-4 pl-10">
+                  <div className="absolute left-5 top-0 h-full w-px bg-slate-200" />
+                  <div
+                    className={`absolute left-[15px] top-5 h-3 w-3 rounded-full border-2 border-white shadow-sm ${severityDotClass(
+                      event.severity
+                    )}`}
+                  />
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <SeverityBadge severity={event.severity} />
+                        <h3 className="text-sm font-semibold text-slate-950">
+                          {eventTypeLabel(event.event_type)}
+                        </h3>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        {event.message}
+                      </p>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">
-                      {event.message}
-                    </p>
+                    <time className="shrink-0 text-xs font-medium text-slate-500">
+                      {formatUtc(event.event_time)}
+                    </time>
                   </div>
-                  <time className="shrink-0 text-xs font-medium text-slate-500">
-                    {formatUtc(event.event_time)}
-                  </time>
                 </div>
+              ))}
+            </div>
+            {hiddenCount > 0 ? (
+              <div className="border-t border-slate-100 bg-slate-50/70 p-3">
+                <button
+                  type="button"
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-teal-500 hover:text-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                  onClick={() =>
+                    setVisibleCount((current) => current + EVENT_PAGE_SIZE)
+                  }
+                >
+                  더보기 {nextCount}개
+                </button>
               </div>
-            ))}
-          </div>
+            ) : null}
+          </>
         )}
       </Card>
     </Section>

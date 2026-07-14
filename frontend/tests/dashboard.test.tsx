@@ -10,7 +10,11 @@ import {
 } from "@/components/dashboard/operations-dashboard";
 import { StatePanel } from "@/components/ui/state-panel";
 import { dashboardFixture } from "@/lib/dashboard-fixture";
-import type { RuntimeStatus } from "@/lib/dashboard-types";
+import type {
+  ApplicationEvent,
+  DashboardData,
+  RuntimeStatus
+} from "@/lib/dashboard-types";
 import {
   chartSeries,
   dashboardSectionNames,
@@ -45,6 +49,28 @@ describe("operations dashboard layout", () => {
     for (const section of dashboardSectionNames()) {
       expect(markup).toContain(section);
     }
+  });
+
+  it("limits recent events to five rows before showing more", () => {
+    const events = Array.from({ length: 12 }, (_, index) => {
+      const baseEvent = dashboardFixture.events[0] as ApplicationEvent;
+      return {
+        ...baseEvent,
+        id: 1000 + index,
+        event_time: `2026-07-14T01:${String(index).padStart(2, "0")}:00Z`,
+        message: `테스트 이벤트 ${index + 1}`
+      };
+    });
+    const data: DashboardData = {
+      ...dashboardFixture,
+      events
+    };
+    const markup = renderToStaticMarkup(<OperationsDashboard data={data} />);
+
+    expect(markup).toContain("테스트 이벤트 5");
+    expect(markup).toContain("더보기 5개");
+    expect(markup).not.toContain("테스트 이벤트 6");
+    expect(markup).not.toContain("테스트 이벤트 12");
   });
 
   it("renders every runtime status badge with text labels", () => {
