@@ -32,5 +32,11 @@ Dashboard widgets must match API contracts and tests.
 - Market chart is intentionally secondary and fixture-based until API/SSE wiring.
 - Health colors use text badges with labels, not color-only status.
 
+## T16 Realtime Decision
+- REST provides initial dashboard hydration and supporting candles, gaps, jobs, and events.
+- SSE provides realtime `dashboard_snapshot`, `heartbeat`, and `error` updates.
+- Browser default EventSource reconnect is used; the UI shows CONNECTING, LIVE, RECONNECTING, DISCONNECTED, or ERROR.
+- Last good data remains visible during stream errors or reconnects.
+
 ## Open Decisions
 - Live chart time windows after API integration.

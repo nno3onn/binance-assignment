@@ -7,7 +7,7 @@ export type RuntimeStatus =
   | "ERROR";
 
 export type ServiceStatus = "OK" | "DEGRADED" | "ERROR";
-export type BackfillStatus = "RUNNING" | "SUCCEEDED" | "FAILED";
+export type BackfillStatus = "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED";
 export type EventSeverity = "INFO" | "WARNING" | "ERROR";
 export type CandleSource = "websocket" | "rest_backfill";
 
@@ -88,11 +88,34 @@ export type SourceMix = {
   count: number;
 };
 
-export type DashboardFixture = {
+export type StreamConnectionStatus =
+  | "CONNECTING"
+  | "LIVE"
+  | "RECONNECTING"
+  | "DISCONNECTED"
+  | "ERROR";
+
+export type DashboardData = {
   summary: DashboardSummary;
   gaps: Gap[];
   backfill_jobs: BackfillJob[];
   candles: CandlePoint[];
   events: ApplicationEvent[];
   source_mix: SourceMix[];
+};
+
+export type DashboardFixture = DashboardData;
+
+export type DashboardStreamPayload = {
+  event_type: "dashboard_snapshot";
+  emitted_at: string;
+  system_health: RuntimeStatus;
+  symbols: Array<Omit<SymbolStatus, "connection_state">>;
+  active_gap_count: number;
+  latest_backfill_status: BackfillStatus | null;
+};
+
+export type DashboardHeartbeatPayload = {
+  event_type: "heartbeat";
+  emitted_at: string;
 };

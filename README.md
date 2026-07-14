@@ -7,9 +7,9 @@ Dashboard statement:
 > “이 화면은 코인 가격을 조회하는 화면이 아니라, Binance market data pipeline이 정상적으로 수집, 저장, 탐지, 복구되고 있는지 확인하는 운영 콘솔이다.”
 
 ## Current Status
-Harness only. Application functionality is intentionally not implemented yet.
+Backend data, dashboard API, SSE stream, and frontend operations console are implemented through T16.
 
-First incomplete Task: `T02 - Scaffold backend project`.
+First incomplete Task: `T17 - Implement smoke test`.
 
 ## Stack
 - Backend: FastAPI, PostgreSQL.
@@ -82,6 +82,17 @@ Read-only dashboard endpoints:
 - `GET /api/dashboard/backfill-jobs`
 - `GET /api/dashboard/events`
 - `GET /api/dashboard/stream` for SSE dashboard snapshots and heartbeat events
+
+## Frontend Realtime Dashboard
+
+The frontend uses `NEXT_PUBLIC_API_BASE_URL` for initial REST hydration and `NEXT_PUBLIC_SSE_URL` for realtime dashboard snapshots. REST loads the initial dashboard state, recent candles, gaps, backfill jobs, and events. SSE then updates the dashboard summary and symbol statuses through `dashboard_snapshot`, `heartbeat`, and `error` events without REST polling.
+
+Required frontend environment variables:
+
+```sh
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_SSE_URL=http://localhost:8000/api/dashboard/stream
+```
 
 ## Required Reading Before Work
 1. `PRODUCT.md`

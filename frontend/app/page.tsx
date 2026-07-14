@@ -1,6 +1,5 @@
-import { OperationsDashboard } from "@/components/dashboard/operations-dashboard";
-import { dashboardFixture } from "@/lib/dashboard-fixture";
+import { DashboardContainer } from "@/components/dashboard/dashboard-container";
 
 export default function HomePage() {
-  return <OperationsDashboard data={dashboardFixture} />;
+  return <DashboardContainer />;
 }

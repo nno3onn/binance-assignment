@@ -20,9 +20,10 @@ import { APP_NAME } from "@/lib/project";
 import type {
   ApplicationEvent,
   BackfillJob,
-  DashboardFixture,
+  DashboardData,
   EventSeverity,
   Gap,
+  StreamConnectionStatus,
   SymbolStatus
 } from "@/lib/dashboard-types";
 import {
@@ -36,12 +37,22 @@ import {
 } from "@/lib/dashboard-view-model";
 
 type OperationsDashboardProps = {
-  data: DashboardFixture;
+  data: DashboardData;
+  connectionStatus?: StreamConnectionStatus;
+  lastGoodUpdateAt?: string | null;
+  lastHeartbeatAt?: string | null;
+  streamError?: string | null;
 };
 
 const symbols: Array<SymbolStatus["symbol"]> = ["BTCUSDT", "ETHUSDT"];
 
-export function OperationsDashboard({ data }: OperationsDashboardProps) {
+export function OperationsDashboard({
+  data,
+  connectionStatus = "DISCONNECTED",
+  lastGoodUpdateAt = null,
+  lastHeartbeatAt = null,
+  streamError = null
+}: OperationsDashboardProps) {
   const [selectedSymbol, setSelectedSymbol] =
     useState<SymbolStatus["symbol"]>("BTCUSDT");
   const series = chartSeries(data, selectedSymbol);
@@ -51,9 +62,22 @@ export function OperationsDashboard({ data }: OperationsDashboardProps) {
       <TopBar
         environment={data.summary.environment}
         lastUpdatedAt={data.summary.last_updated_at}
+        connectionStatus={connectionStatus}
+        lastGoodUpdateAt={lastGoodUpdateAt}
       />
       <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8">
-        <SystemHealthSummary data={data} />
+        {streamError ? (
+          <StatePanel
+            state="error"
+            title="Realtime stream degraded"
+            message={`${streamError} Last good update is still displayed.`}
+          />
+        ) : null}
+        <SystemHealthSummary
+          data={data}
+          connectionStatus={connectionStatus}
+          lastHeartbeatAt={lastHeartbeatAt}
+        />
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <DataFreshness symbols={data.summary.symbols} />
@@ -82,10 +106,14 @@ export function OperationsDashboard({ data }: OperationsDashboardProps) {
 
 function TopBar({
   environment,
-  lastUpdatedAt
+  lastUpdatedAt,
+  connectionStatus,
+  lastGoodUpdateAt
 }: {
   environment: string;
   lastUpdatedAt: string;
+  connectionStatus: StreamConnectionStatus;
+  lastGoodUpdateAt: string | null;
 }) {
   return (
     <header className="border-b border-slate-200 bg-white">
@@ -98,7 +126,7 @@ function TopBar({
             {APP_NAME}
           </h1>
         </div>
-        <dl className="grid grid-cols-2 gap-3 text-sm sm:min-w-80">
+        <dl className="grid grid-cols-2 gap-3 text-sm sm:min-w-[34rem] sm:grid-cols-4">
           <div>
             <dt className="text-slate-500">Environment</dt>
             <dd className="font-medium text-slate-950">{environment}</dd>
@@ -109,13 +137,27 @@ function TopBar({
               {formatUtc(lastUpdatedAt)}
             </dd>
           </div>
+          <div>
+            <dt className="text-slate-500">SSE</dt>
+            <dd className="font-medium text-slate-950">{connectionStatus}</dd>
+          </div>
+          <div>
+            <dt className="text-slate-500">Last Good</dt>
+            <dd className="font-medium text-slate-950">
+              {formatUtc(lastGoodUpdateAt)}
+            </dd>
+          </div>
         </dl>
       </div>
     </header>
   );
 }
 
-function SystemHealthSummary({ data }: OperationsDashboardProps) {
+function SystemHealthSummary({
+  data,
+  connectionStatus,
+  lastHeartbeatAt
+}: OperationsDashboardProps) {
   const btc = data.summary.symbols.find(
     (symbol) => symbol.symbol === "BTCUSDT"
   );
@@ -165,6 +207,13 @@ function SystemHealthSummary({ data }: OperationsDashboardProps) {
             </Badge>
           </MetricCard>
         ))}
+        <MetricCard
+          label="SSE Stream"
+          value={connectionStatus ?? "DISCONNECTED"}
+          detail={`Heartbeat ${formatUtc(lastHeartbeatAt ?? null)}`}
+        >
+          <ConnectionBadge status={connectionStatus ?? "DISCONNECTED"} />
+        </MetricCard>
       </div>
     </Section>
   );
@@ -341,7 +390,7 @@ function RecentCandleChart({
   return (
     <Section
       title="Recent Candle Chart"
-      description="Fixture-based close prices for visual continuity checks."
+      description="Recent REST candles used as market-data continuity context."
       action={
         <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
           {symbols.map((symbol) => (
@@ -473,6 +522,20 @@ function BackfillBadge({ status }: { status: BackfillJob["status"] }) {
         : "active";
   return (
     <Badge tone={tone} label={`Backfill ${status}`}>
+      {status}
+    </Badge>
+  );
+}
+
+function ConnectionBadge({ status }: { status: StreamConnectionStatus }) {
+  const tone =
+    status === "LIVE"
+      ? "success"
+      : status === "ERROR" || status === "DISCONNECTED"
+        ? "danger"
+        : "warning";
+  return (
+    <Badge tone={tone} label={`SSE connection ${status}`}>
       {status}
     </Badge>
   );

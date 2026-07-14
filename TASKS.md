@@ -153,7 +153,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
   - Commit message: `feat: build operations dashboard layout`
   - Prerequisites: T03, T13.
 
-- [ ] **T16 - Connect dashboard realtime updates**
+- [x] **T16 - Connect dashboard realtime updates**
   - Goal: Wire TanStack Query and SSE to live backend state.
   - Scope: Frontend data hooks and UI states.
   - Expected files: `frontend/lib/*`, `frontend/components/*`, `frontend/tests/*`.

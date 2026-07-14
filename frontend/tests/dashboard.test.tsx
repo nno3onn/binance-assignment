@@ -1,8 +1,9 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import HomePage from "@/app/page";
 import {
   OperationsDashboard,
   StatusBadge
@@ -18,12 +19,21 @@ import {
 } from "@/lib/dashboard-view-model";
 
 describe("operations dashboard layout", () => {
-  it("renders the dashboard page", () => {
-    const markup = renderToStaticMarkup(<HomePage />);
+  it("renders the dashboard shell", () => {
+    const markup = renderToStaticMarkup(
+      <OperationsDashboard
+        data={dashboardFixture}
+        connectionStatus="LIVE"
+        lastGoodUpdateAt="2026-07-14T01:18:30Z"
+        lastHeartbeatAt="2026-07-14T01:18:32Z"
+      />
+    );
 
     expect(markup).toContain("Market Data Operations Console");
     expect(markup).toContain("Environment");
     expect(markup).toContain("Last Updated");
+    expect(markup).toContain("SSE");
+    expect(markup).toContain("LIVE");
   });
 
   it("renders all required operational sections", () => {
@@ -104,5 +114,16 @@ describe("operations dashboard layout", () => {
     expect(markup).toContain("sm:grid-cols-2");
     expect(markup).toContain("xl:grid-cols");
     expect(mix.reduce((sum, item) => sum + item.percentage, 0)).toBe(100);
+  });
+
+  it("does not import fixture data from the production page", () => {
+    const pageSource = readFileSync(
+      path.join(process.cwd(), "app/page.tsx"),
+      "utf8"
+    );
+
+    expect(pageSource).toContain("DashboardContainer");
+    expect(pageSource).not.toContain("dashboardFixture");
+    expect(pageSource).not.toContain("dashboard-fixture");
   });
 });

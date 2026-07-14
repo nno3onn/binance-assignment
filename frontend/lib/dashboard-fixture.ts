@@ -1,5 +1,7 @@
 import type { DashboardFixture } from "./dashboard-types";
 
+// Development/test-only sample data. Production dashboard rendering uses
+// `useDashboardRealtime` and never imports this fixture from the app route.
 export const dashboardFixture: DashboardFixture = {
   summary: {
     system_status: "DEGRADED",
