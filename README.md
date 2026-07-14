@@ -1,147 +1,247 @@
 # Binance Market Data Operations Console
 
-Binance `BTCUSDT`, `ETHUSDT` 1분봉 데이터를 수집하고 수집 파이프라인 상태를 확인하는 운영 대시보드입니다.
+Binance의 **BTCUSDT**, **ETHUSDT** 실시간 거래 데이터를 수집하고, 최초 실행 및 서버 재시작 시 누락 데이터를 복구할 수 있는 **Market Data Operations Console**입니다.
 
-가격 화면보다 `freshness`, `runtime status`, `gap`, `backfill/recovery`, `event log`를 중심에 둔 운영 콘솔로 구현했습니다. 배포는 과제 필수 요구사항이 아니므로 제출 범위에서 제외했습니다.
+본 프로젝트는 단순 시세 조회 화면이 아닌, **데이터 수집 파이프라인의 운영 상태를 모니터링하는 내부 운영 대시보드**를 목표로 구현했습니다.
 
-상세 설계는 [docs](docs)를 참고해 주세요.
+> 배포는 과제 필수 요구사항이 아니므로 제출 범위에서 제외했으며, 로컬 실행 기준으로 검증했습니다.
 
-## 주요 기능
+---
 
-- `BTCUSDT`, `ETHUSDT` 1분봉: 두 심볼을 기본 수집/조회 대상으로 사용합니다.
-- Binance REST 초기 백필: 빈 DB에서 최근 `INITIAL_BACKFILL_HOURS` 구간을 백필합니다.
-- Binance WebSocket 실시간 수집: kline message validation, DTO 변환, reconnect 구조를 제공합니다.
-- Restart recovery: 재시작 후 탐지된 누락 구간만 REST로 복구합니다.
-- Gap detection: expected 1분 interval 기준으로 missing candle 구간과 개수를 계산합니다.
-- Idempotent upsert: `(symbol, interval, open_time)` unique key로 중복 candle row를 방지합니다.
-- Runtime status: 심볼별 `INITIALIZING`, `LIVE`, `DEGRADED`, `BACKFILLING`, `STALE`, `ERROR` 상태를 관리합니다.
-- FastAPI REST API: health, summary, symbols, candles, gaps, backfill jobs, events endpoint를 제공합니다.
-- SSE: dashboard snapshot과 heartbeat를 `/api/dashboard/stream`으로 전송합니다.
-- Next.js 운영 대시보드: freshness, pipeline status, gaps, backfill timeline, event log를 보여줍니다.
+# 주요 기능
 
-## 기술 스택
+## 1. 실시간 데이터 수집
 
-| 영역 | 기술 |
-|---|---|
-| Backend | Python 3.12, FastAPI, SQLAlchemy, Alembic, uv |
-| Frontend | Next.js App Router, TypeScript, Tailwind CSS, TanStack Query, Zustand, Recharts |
-| Database | PostgreSQL |
-| Testing | pytest, ruff, mypy, Vitest, ESLint, Prettier, Next.js build |
-| Tooling | Make, shell scripts |
+- Binance WebSocket을 이용한 BTCUSDT, ETHUSDT 실시간 수집
+- Binance REST API 기반 최초 데이터 백필
+- 서버 재시작 시 누락 구간(Gap) 자동 복구
 
-## 프로젝트 구조
+## 2. 데이터 저장
+
+- `(symbol, interval, open_time)` Unique Key 기반 Idempotent Upsert
+- Runtime Status 관리
+- Backfill Job History 관리
+- Event History 관리
+
+## 3. 운영 대시보드
+
+운영자가 수집 시스템을 확인할 수 있도록 다음 정보를 제공합니다.
+
+- System Health
+- Runtime Status
+- Data Freshness
+- Symbol Pipeline Status
+- Gap Detection
+- Backfill Job
+- Event History
+
+## 4. Dashboard API
+
+- REST API
+- SSE(Server-Sent Events) 기반 실시간 업데이트
+
+---
+
+# 기술 스택
+
+| 구분          | 기술                                         |
+| ------------- | -------------------------------------------- |
+| Backend       | Python 3.12, FastAPI, SQLAlchemy, Alembic    |
+| Frontend      | Next.js(App Router), TypeScript, TailwindCSS |
+| State         | TanStack Query, Zustand                      |
+| Database      | PostgreSQL                                   |
+| Visualization | Recharts                                     |
+| Test          | pytest, mypy, ruff, Vitest, ESLint           |
+| Tool          | uv, Make                                     |
+
+---
+
+# 프로젝트 구조
 
 ```text
-backend/   FastAPI, SQLAlchemy models, repository, Binance clients, services, tests
-frontend/  Next.js dashboard, REST/SSE client, UI components, Vitest tests
-docs/      설계, 대시보드, 백필/복구, 운영 문서
-scripts/   check, smoke, recovery-drill scripts
+backend/
+ ├── app/
+ ├── migrations/
+ ├── tests/
+
+frontend/
+ ├── app/
+ ├── components/
+ ├── lib/
+ ├── tests/
+
+docs/
+scripts/
 ```
 
-## 설치 및 실행 방법
+---
 
-### 1. Clone 및 의존성 설치
+# 설치 및 실행
+
+## 1. 저장소 클론
 
 ```bash
 git clone <REPOSITORY_URL>
 cd binance-assignment
-make bootstrap
 ```
 
-### 2. Backend 환경변수 생성
+---
 
-FastAPI 직접 실행은 `backend/.env`를 읽습니다.
+## 2. Backend 설정
 
 ```bash
 cd backend
+
 cp .env.example .env
-unset DATABASE_URL
-```
 
-`backend/.env` 핵심 값:
-
-```bash
-DATABASE_URL=postgresql://binance:binance@localhost:5432/binance_assignment
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-```
-
-### 3. PostgreSQL 준비
-
-로컬 PostgreSQL에 아래 DB 접속 정보가 준비되어 있어야 합니다.
-
-```text
-host=localhost
-port=5432
-database=binance_assignment
-user=binance
-password=binance
-```
-
-다른 계정이나 DB를 사용한다면 `backend/.env`의 `DATABASE_URL`만 수정합니다.
-
-### 4. Migration 및 Backend 실행
-
-```bash
-cd backend
 uv sync
+
 uv run alembic upgrade head
+
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-확인:
+Backend
 
-```bash
-curl http://localhost:8000/api/health
-curl http://localhost:8000/api/dashboard/summary
+```
+http://localhost:8000
 ```
 
-Swagger: `http://localhost:8000/docs`
+Swagger
 
-### 5. Frontend 실행
+```
+http://localhost:8000/docs
+```
 
-새 터미널에서 실행합니다.
+Health Check
+
+```
+http://localhost:8000/api/health
+```
+
+---
+
+## 3. Frontend 실행
+
+새 터미널에서
 
 ```bash
 cd frontend
+
 npm ci
+
 npm run dev
 ```
 
-Dashboard: `http://localhost:3000`
+Frontend
 
-## 환경변수
+```
+http://localhost:3000
+```
 
-핵심 변수만 정리했습니다. 전체 목록은 [.env.example](.env.example), [backend/.env.example](backend/.env.example)을 참고해 주세요.
+---
 
-| 변수명 | 예시 | 설명 |
-|---|---|---|
-| `DATABASE_URL` | `postgresql://binance:binance@localhost:5432/binance_assignment` | Backend DB 연결 URL |
-| `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | 허용할 frontend origin |
-| `SYMBOLS` | `BTCUSDT,ETHUSDT` | 수집/조회 대상 심볼 |
-| `CANDLE_INTERVAL` | `1m` | candle interval |
-| `INITIAL_BACKFILL_HOURS` | `24` | 빈 DB 초기 백필 lookback 시간 |
-| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` | Frontend REST API base URL |
-| `NEXT_PUBLIC_SSE_URL` | `http://localhost:8000/api/dashboard/stream` | Frontend SSE endpoint |
+# 환경변수
 
-## 테스트
+실행에 필요한 주요 환경변수입니다.
+
+| 변수                     | 예시                                                           |
+| ------------------------ | -------------------------------------------------------------- |
+| DATABASE_URL             | postgresql://binance:binance@localhost:5432/binance_assignment |
+| CORS_ORIGINS             | http://localhost:3000,http://127.0.0.1:3000                    |
+| SYMBOLS                  | BTCUSDT,ETHUSDT                                                |
+| CANDLE_INTERVAL          | 1m                                                             |
+| INITIAL_BACKFILL_HOURS   | 24                                                             |
+| NEXT_PUBLIC_API_BASE_URL | http://localhost:8000                                          |
+| NEXT_PUBLIC_SSE_URL      | http://localhost:8000/api/dashboard/stream                     |
+
+기타 환경변수는
+
+```
+.env.example
+backend/.env.example
+```
+
+파일을 참고합니다.
+
+---
+
+# API
+
+| Method | Endpoint                     | 설명              |
+| ------ | ---------------------------- | ----------------- |
+| GET    | /api/health                  | Health Check      |
+| GET    | /api/dashboard/summary       | Dashboard Summary |
+| GET    | /api/dashboard/symbols       | Symbol Status     |
+| GET    | /api/dashboard/candles       | Candle 조회       |
+| GET    | /api/dashboard/gaps          | Gap 조회          |
+| GET    | /api/dashboard/backfill-jobs | Backfill 작업     |
+| GET    | /api/dashboard/events        | Event History     |
+| GET    | /api/dashboard/stream        | SSE Stream        |
+
+---
+
+# 테스트
+
+전체 검증
 
 ```bash
 make check
 ```
 
-현재 검증 완료 항목:
+검증 결과
 
-| 항목 | 결과 |
-|---|---|
-| `make check` | 통과 |
-| Backend tests | `76 passed` |
-| Frontend tests | `17 passed` |
-| Frontend build | 통과 |
+| 항목           | 결과      |
+| -------------- | --------- |
+| make check     | 통과      |
+| Backend Test   | 76 Passed |
+| Frontend Test  | 17 Passed |
+| Frontend Build | 성공      |
 
-## 주요 구현 내용
+---
 
-- 데이터 모델: `candles`, `symbol_runtime_status`, `backfill_jobs`, `application_events`
-- Persistence: repository interface와 SQLAlchemy 구현체
-- Backfill/Recovery: REST DTO를 domain model로 변환한 뒤 repository upsert 경로 사용
-- Dashboard API: endpoint 내부에 비즈니스 로직을 두지 않고 service/repository 조합 사용
-- Frontend realtime: REST 초기 조회 후 SSE snapshot으로 상태 갱신
+# 주요 구현 내용
+
+### 실시간 수집
+
+- Binance WebSocket을 이용해 실시간 Candle 데이터를 수집하도록 구현했습니다.
+
+### 최초 백필
+
+- 최초 실행 시 Binance REST API를 이용하여 최근 데이터를 저장하도록 구현했습니다.
+
+### 재시작 복구
+
+- Gap Detection을 통해 누락된 구간만 탐지하고 REST API를 이용하여 복구하도록 구현했습니다.
+
+### 데이터 저장
+
+- `(symbol, interval, open_time)` Unique Key 기반 Upsert를 적용하여 중복 저장을 방지했습니다.
+
+### 구조 설계
+
+- Repository Pattern을 적용하여 데이터 접근과 비즈니스 로직을 분리했습니다.
+
+### Dashboard
+
+- REST API로 초기 데이터를 조회하고, SSE를 통해 실시간 상태를 갱신하도록 구현했습니다.
+
+---
+
+# 제한 사항
+
+- Docker Compose 전체 실행은 검증하지 못했습니다.
+- 실제 Binance와 PostgreSQL을 연결한 장시간 통합 테스트는 수행하지 않았습니다.
+- 1000개 이상의 Gap Pagination은 구현하지 않았습니다.
+- Browser E2E 테스트는 포함하지 않았습니다.
+
+---
+
+# 상세 문서
+
+보다 자세한 설계 내용은 아래 문서를 참고해주세요.
+
+- `docs/02-architecture.md`
+- `docs/04-backfill-and-recovery.md`
+- `docs/06-dashboard-design.md`
+- `docs/09-reviewer-walkthrough.md`
