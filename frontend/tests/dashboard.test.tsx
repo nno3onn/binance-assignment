@@ -14,6 +14,7 @@ import type { RuntimeStatus } from "@/lib/dashboard-types";
 import {
   chartSeries,
   dashboardSectionNames,
+  runtimeStatusLabel,
   sourceMixPercentages,
   statusTone
 } from "@/lib/dashboard-view-model";
@@ -29,11 +30,11 @@ describe("operations dashboard layout", () => {
       />
     );
 
-    expect(markup).toContain("Market Data Operations Console");
-    expect(markup).toContain("Environment");
-    expect(markup).toContain("Last Updated");
+    expect(markup).toContain("시장 데이터 운영 대시보드");
+    expect(markup).toContain("환경");
+    expect(markup).toContain("마지막 갱신");
     expect(markup).toContain("SSE");
-    expect(markup).toContain("LIVE");
+    expect(markup).toContain("연결됨");
   });
 
   it("renders all required operational sections", () => {
@@ -64,8 +65,8 @@ describe("operations dashboard layout", () => {
     );
 
     for (const status of statuses) {
-      expect(markup).toContain(`Status ${status}`);
-      expect(markup).toContain(status);
+      expect(markup).toContain(`상태 ${runtimeStatusLabel(status)}`);
+      expect(markup).toContain(runtimeStatusLabel(status));
       expect(statusTone[status]).toBeDefined();
     }
   });

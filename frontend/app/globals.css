@@ -4,10 +4,20 @@
 
 :root {
   color-scheme: light;
+  --color-primary: #0f766e;
+  --color-primary-strong: #115e59;
+  --color-ink: #0f172a;
+  --color-page: #f4f7fb;
 }
 
 body {
   margin: 0;
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--color-page);
+  color: var(--color-ink);
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #99f6e4;
+  color: #042f2e;
 }

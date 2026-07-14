@@ -153,7 +153,7 @@ describe("dashboard SSE stream adapter", () => {
     source.onopen?.(new Event("open"));
 
     expect(statuses).toEqual(["CONNECTING", "RECONNECTING", "LIVE"]);
-    expect(errors[0]).toContain("browser reconnect");
+    expect(errors[0]).toContain("재연결");
   });
 
   it("closes EventSource on unmount cleanup and does not duplicate sources", () => {
@@ -193,7 +193,7 @@ describe("dashboard SSE stream adapter", () => {
     source.emitInvalid("dashboard_snapshot");
 
     expect(snapshots).toHaveLength(0);
-    expect(errors).toContain("Invalid dashboard snapshot ignored.");
+    expect(errors).toContain("잘못된 대시보드 스냅샷을 무시했습니다.");
   });
 });
 
