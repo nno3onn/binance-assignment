@@ -9,12 +9,14 @@ export function DashboardContainer() {
 
   if (state.isLoading) {
     return (
-      <main className="min-h-screen bg-slate-100 p-6">
-        <StatePanel
-          state="loading"
-          title="대시보드를 불러오는 중입니다."
-          message="백엔드에서 초기 데이터를 불러오는 중입니다."
-        />
+      <main className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
+        <div className="w-full max-w-sm">
+          <StatePanel
+            state="loading"
+            title="대시보드를 불러오는 중입니다."
+            message="백엔드에서 초기 데이터를 불러오는 중입니다."
+          />
+        </div>
       </main>
     );
   }
