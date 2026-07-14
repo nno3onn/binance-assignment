@@ -164,7 +164,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
 
 ## Phase 9. Recovery drill and tests
 
-- [ ] **T17 - Implement smoke test**
+- [x] **T17 - Implement smoke test**
   - Goal: Verify service health, API, symbol status, stored data, and dashboard access.
   - Scope: `scripts/smoke.sh` real checks.
   - Expected files: `scripts/smoke.sh`, `docs/09-reviewer-walkthrough.md`.

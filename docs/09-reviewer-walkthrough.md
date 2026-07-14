@@ -1,7 +1,7 @@
 # 09. Reviewer Walkthrough
 
-## Current Harness Stage
-Application functionality is intentionally not implemented yet. The repository currently defines the control structure for later implementation.
+## Current Implementation Stage
+Backend dashboard APIs, SSE, frontend realtime dashboard wiring, and smoke verification are implemented through T17.
 
 ## What to Review First
 1. `PRODUCT.md` for product goal and scope.
@@ -20,6 +20,17 @@ make check
 make smoke
 make recovery-drill
 ```
+
+## Smoke Verification
+`make smoke` expects backend and frontend services to already be running. It checks:
+- backend `/api/health`
+- dashboard summary, symbols, candles, and events
+- BTCUSDT and ETHUSDT presence
+- at least one candle per symbol
+- SSE `text/event-stream`
+- frontend root page and dashboard title
+
+The script uses `curl` and `python3`; `jq` is not required. Override URLs with `SMOKE_API_BASE_URL` and `SMOKE_FRONTEND_URL`.
 
 ## Expected Operational Proof
 - Empty DB triggers initial backfill.

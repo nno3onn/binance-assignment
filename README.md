@@ -37,7 +37,7 @@ make reset-db
 make recovery-drill
 ```
 
-At the current stage, backend and frontend lint, typecheck, tests, and frontend build are active. Smoke, database reset, and recovery drill commands remain guarded placeholders until their linked Tasks are complete.
+At the current stage, backend and frontend lint, typecheck, tests, and frontend build are active. `make smoke` is active and verifies already-running backend/frontend services. Database reset and recovery drill commands remain guarded placeholders until their linked Tasks are complete.
 
 ## Database Migrations
 
@@ -93,6 +93,25 @@ Required frontend environment variables:
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 NEXT_PUBLIC_SSE_URL=http://localhost:8000/api/dashboard/stream
 ```
+
+## Smoke Test
+
+`make smoke` checks a running system through HTTP only. Start backend and frontend first, then run:
+
+```sh
+make smoke
+```
+
+Optional overrides:
+
+```sh
+SMOKE_API_BASE_URL=http://localhost:8000 \
+SMOKE_FRONTEND_URL=http://localhost:3000 \
+SMOKE_RETRIES=20 \
+make smoke
+```
+
+The script requires `curl` and `python3`, does not require `jq`, and fails fast with `[FAIL]` when a required endpoint or data condition is missing.
 
 ## Required Reading Before Work
 1. `PRODUCT.md`
