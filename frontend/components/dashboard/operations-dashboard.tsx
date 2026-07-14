@@ -32,7 +32,16 @@ import {
   formatPrice,
   formatUtc,
   freshnessLabel,
+  backfillJobTypeLabel,
+  backfillStatusLabel,
+  candleSourceLabel,
+  connectionStatusLabel,
+  eventTypeLabel,
   sourceMixPercentages,
+  runtimeStatusLabel,
+  serviceStatusLabel,
+  severityLabel,
+  symbolConnectionStatusLabel,
   statusTone
 } from "@/lib/dashboard-view-model";
 
@@ -69,8 +78,8 @@ export function OperationsDashboard({
         {streamError ? (
           <StatePanel
             state="error"
-            title="Realtime stream degraded"
-            message={`${streamError} Last good update is still displayed.`}
+            title="실시간 연결 상태가 불안정합니다."
+            message={`${streamError} 마지막 정상 데이터는 계속 표시됩니다.`}
           />
         ) : null}
         <SystemHealthSummary
@@ -120,7 +129,7 @@ function TopBar({
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Market data pipeline
+            시장 데이터 파이프라인
           </p>
           <h1 className="text-xl font-semibold text-slate-950 sm:text-2xl">
             {APP_NAME}
@@ -128,21 +137,23 @@ function TopBar({
         </div>
         <dl className="grid grid-cols-2 gap-3 text-sm sm:min-w-[34rem] sm:grid-cols-4">
           <div>
-            <dt className="text-slate-500">Environment</dt>
+            <dt className="text-slate-500">환경</dt>
             <dd className="font-medium text-slate-950">{environment}</dd>
           </div>
           <div>
-            <dt className="text-slate-500">Last Updated</dt>
+            <dt className="text-slate-500">마지막 갱신</dt>
             <dd className="font-medium text-slate-950">
               {formatUtc(lastUpdatedAt)}
             </dd>
           </div>
           <div>
             <dt className="text-slate-500">SSE</dt>
-            <dd className="font-medium text-slate-950">{connectionStatus}</dd>
+            <dd className="font-medium text-slate-950">
+              {connectionStatusLabel(connectionStatus)}
+            </dd>
           </div>
           <div>
-            <dt className="text-slate-500">Last Good</dt>
+            <dt className="text-slate-500">마지막 정상 수신</dt>
             <dd className="font-medium text-slate-950">
               {formatUtc(lastGoodUpdateAt)}
             </dd>
@@ -167,28 +178,28 @@ function SystemHealthSummary({
 
   return (
     <Section
-      title="System Health Summary"
-      description="Pipeline state, symbol health, and service checks."
+      title="시스템 상태 요약"
+      description="파이프라인, 심볼, 서비스 상태를 한눈에 확인합니다."
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <MetricCard
-          label="Overall"
-          value={data.summary.system_status}
-          detail={`${data.summary.active_gap_count} active gaps`}
+          label="전체 상태"
+          value={runtimeStatusLabel(data.summary.system_status)}
+          detail={`활성 누락 ${data.summary.active_gap_count}건`}
         >
           <StatusBadge status={data.summary.system_status} />
         </MetricCard>
         <MetricCard
           label="BTCUSDT"
-          value={btc?.status ?? "INITIALIZING"}
-          detail={btc ? freshnessLabel(btc) : "No runtime status"}
+          value={btc ? runtimeStatusLabel(btc.status) : "초기화 중"}
+          detail={btc ? freshnessLabel(btc) : "수집 상태 없음"}
         >
           {btc ? <StatusBadge status={btc.status} /> : null}
         </MetricCard>
         <MetricCard
           label="ETHUSDT"
-          value={eth?.status ?? "INITIALIZING"}
-          detail={eth ? freshnessLabel(eth) : "No runtime status"}
+          value={eth ? runtimeStatusLabel(eth.status) : "초기화 중"}
+          detail={eth ? freshnessLabel(eth) : "수집 상태 없음"}
         >
           {eth ? <StatusBadge status={eth.status} /> : null}
         </MetricCard>
@@ -196,21 +207,21 @@ function SystemHealthSummary({
           <MetricCard
             key={check.name}
             label={check.name}
-            value={check.status}
+            value={serviceStatusLabel(check.status)}
             detail={check.detail}
           >
             <Badge
               tone={statusTone[check.status]}
-              label={`${check.name} ${check.status}`}
+              label={`${check.name} ${serviceStatusLabel(check.status)}`}
             >
-              {check.status}
+              {serviceStatusLabel(check.status)}
             </Badge>
           </MetricCard>
         ))}
         <MetricCard
-          label="SSE Stream"
-          value={connectionStatus ?? "DISCONNECTED"}
-          detail={`Heartbeat ${formatUtc(lastHeartbeatAt ?? null)}`}
+          label="SSE 스트림"
+          value={connectionStatusLabel(connectionStatus ?? "DISCONNECTED")}
+          detail={`하트비트 ${formatUtc(lastHeartbeatAt ?? null)}`}
         >
           <ConnectionBadge status={connectionStatus ?? "DISCONNECTED"} />
         </MetricCard>
@@ -225,7 +236,10 @@ function DataFreshness({
   symbols: SymbolStatus[];
 }) {
   return (
-    <Section title="Data Freshness" description="Last event and lag by symbol.">
+    <Section
+      title="데이터 최신성"
+      description="심볼별 마지막 이벤트와 지연 시간입니다."
+    >
       <div className="grid gap-3 md:grid-cols-2">
         {symbolStatuses.map((symbol) => (
           <Card key={symbol.symbol} className="p-4">
@@ -235,20 +249,20 @@ function DataFreshness({
                   {symbol.symbol}
                 </h3>
                 <p className="mt-1 text-sm text-slate-600">
-                  Last event {formatUtc(symbol.last_event_at)}
+                  마지막 이벤트 {formatUtc(symbol.last_event_at)}
                 </p>
               </div>
               <StatusBadge status={symbol.status} />
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
               <div>
-                <dt className="text-slate-500">Freshness</dt>
+                <dt className="text-slate-500">최신성</dt>
                 <dd className="font-semibold text-slate-950">
                   {formatDuration(symbol.freshness_seconds)}
                 </dd>
               </div>
               <div>
-                <dt className="text-slate-500">Lag</dt>
+                <dt className="text-slate-500">지연</dt>
                 <dd className="font-semibold text-slate-950">
                   {formatDuration(symbol.lag_seconds)}
                 </dd>
@@ -268,18 +282,18 @@ function SymbolPipelineStatus({
 }) {
   return (
     <Section
-      title="Symbol Pipeline Status"
-      description="Runtime status from collector through persistence."
+      title="심볼별 파이프라인 상태"
+      description="수집기부터 저장소까지의 런타임 상태입니다."
     >
       <Card>
         <DataTable
           headers={[
-            "Symbol",
-            "Status",
-            "Latest Price",
-            "Last Event",
-            "Freshness",
-            "Connection State"
+            "심볼",
+            "상태",
+            "최신 가격",
+            "마지막 이벤트",
+            "최신성",
+            "연결 상태"
           ]}
         >
           {symbolStatuses.map((symbol) => (
@@ -293,7 +307,9 @@ function SymbolPipelineStatus({
               <TableCell>{formatPrice(symbol.latest_price)}</TableCell>
               <TableCell>{formatUtc(symbol.last_event_at)}</TableCell>
               <TableCell>{formatDuration(symbol.freshness_seconds)}</TableCell>
-              <TableCell>{symbol.connection_state}</TableCell>
+              <TableCell>
+                {symbolConnectionStatusLabel(symbol.connection_state)}
+              </TableCell>
             </tr>
           ))}
         </DataTable>
@@ -305,21 +321,21 @@ function SymbolPipelineStatus({
 function GapDetector({ gaps }: { gaps: Gap[] }) {
   return (
     <Section
-      title="Gap Detector"
-      description="Missing 1m candle ranges that require recovery."
+      title="누락 데이터 현황"
+      description="복구가 필요한 1분봉 누락 구간입니다."
     >
       <Card>
         {gaps.length === 0 ? (
           <div className="p-4">
             <StatePanel
               state="empty"
-              title="No active gaps"
-              message="Expected 1m candle sequence is complete for monitored symbols."
+              title="활성 누락이 없습니다."
+              message="모니터링 중인 심볼의 1분봉 시퀀스가 정상입니다."
             />
           </div>
         ) : (
           <DataTable
-            headers={["Symbol", "Gap Start", "Gap End", "Missing Candles"]}
+            headers={["심볼", "누락 시작", "누락 종료", "누락 캔들 수"]}
           >
             {gaps.map((gap) => (
               <tr key={`${gap.symbol}-${gap.start_time}`}>
@@ -339,8 +355,8 @@ function GapDetector({ gaps }: { gaps: Gap[] }) {
 function BackfillTimeline({ jobs }: { jobs: BackfillJob[] }) {
   return (
     <Section
-      title="Backfill Job Timeline"
-      description="Initial backfills and restart recovery jobs."
+      title="백필 작업 이력"
+      description="초기 백필과 재시작 복구 작업입니다."
     >
       <Card className="divide-y divide-slate-100">
         {jobs.map((job) => (
@@ -348,24 +364,24 @@ function BackfillTimeline({ jobs }: { jobs: BackfillJob[] }) {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-slate-950">
-                  {job.symbol} / {job.job_type}
+                  {job.symbol} / {backfillJobTypeLabel(job.job_type)}
                 </h3>
                 <p className="mt-1 text-sm text-slate-600">
-                  {formatUtc(job.range_start)} to {formatUtc(job.range_end)}
+                  {formatUtc(job.range_start)} ~ {formatUtc(job.range_end)}
                 </p>
               </div>
               <BackfillBadge status={job.status} />
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
               <div>
-                <dt className="text-slate-500">Recovered</dt>
+                <dt className="text-slate-500">복구됨</dt>
                 <dd className="font-semibold text-slate-950">
                   {job.inserted_candle_count + job.updated_candle_count}/
                   {job.requested_candle_count}
                 </dd>
               </div>
               <div>
-                <dt className="text-slate-500">Completed</dt>
+                <dt className="text-slate-500">완료 시각</dt>
                 <dd className="font-semibold text-slate-950">
                   {formatUtc(job.finished_at)}
                 </dd>
@@ -389,8 +405,8 @@ function RecentCandleChart({
 }) {
   return (
     <Section
-      title="Recent Candle Chart"
-      description="Recent REST candles used as market-data continuity context."
+      title="최근 캔들 차트"
+      description="시장 데이터 연속성을 확인하기 위한 최근 캔들입니다."
       action={
         <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
           {symbols.map((symbol) => (
@@ -438,7 +454,7 @@ function RecentCandleChart({
               stroke="#0f766e"
               fill="url(#closePrice)"
               strokeWidth={2}
-              name={`${selectedSymbol} close`}
+              name={`${selectedSymbol} 종가`}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -450,13 +466,11 @@ function RecentCandleChart({
 function RecentEventLog({ events }: { events: ApplicationEvent[] }) {
   return (
     <Section
-      title="Recent Event Log"
-      description="Operational events from collection, backfill, and recovery."
+      title="최근 이벤트"
+      description="수집, 백필, 복구 과정에서 발생한 운영 이벤트입니다."
     >
       <Card>
-        <DataTable
-          headers={["Occurred At", "Severity", "Event Type", "Message"]}
-        >
+        <DataTable headers={["발생 시각", "심각도", "이벤트 유형", "메시지"]}>
           {events.map((event) => (
             <tr key={event.id}>
               <TableCell>{formatUtc(event.event_time)}</TableCell>
@@ -464,7 +478,7 @@ function RecentEventLog({ events }: { events: ApplicationEvent[] }) {
                 <SeverityBadge severity={event.severity} />
               </TableCell>
               <TableCell className="font-medium text-slate-950">
-                {event.event_type}
+                {eventTypeLabel(event.event_type)}
               </TableCell>
               <TableCell>{event.message}</TableCell>
             </tr>
@@ -478,14 +492,17 @@ function RecentEventLog({ events }: { events: ApplicationEvent[] }) {
 function SourceMix({ data }: OperationsDashboardProps) {
   const mix = sourceMixPercentages(data);
   return (
-    <Section title="Source Mix" description="Stored candle source lineage.">
+    <Section
+      title="데이터 수집 경로"
+      description="저장된 캔들의 수집 경로 비율입니다."
+    >
       <Card className="p-4">
         <div className="space-y-4">
           {mix.map((item) => (
             <div key={item.source}>
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium text-slate-950">
-                  {item.source}
+                  {candleSourceLabel(item.source)}
                 </span>
                 <span className="text-slate-600">
                   {item.percentage}% / {item.count}
@@ -507,8 +524,11 @@ function SourceMix({ data }: OperationsDashboardProps) {
 
 export function StatusBadge({ status }: { status: SymbolStatus["status"] }) {
   return (
-    <Badge tone={statusTone[status]} label={`Status ${status}`}>
-      {status}
+    <Badge
+      tone={statusTone[status]}
+      label={`상태 ${runtimeStatusLabel(status)}`}
+    >
+      {runtimeStatusLabel(status)}
     </Badge>
   );
 }
@@ -521,8 +541,8 @@ function BackfillBadge({ status }: { status: BackfillJob["status"] }) {
         ? "danger"
         : "active";
   return (
-    <Badge tone={tone} label={`Backfill ${status}`}>
-      {status}
+    <Badge tone={tone} label={`백필 ${backfillStatusLabel(status)}`}>
+      {backfillStatusLabel(status)}
     </Badge>
   );
 }
@@ -535,8 +555,8 @@ function ConnectionBadge({ status }: { status: StreamConnectionStatus }) {
         ? "danger"
         : "warning";
   return (
-    <Badge tone={tone} label={`SSE connection ${status}`}>
-      {status}
+    <Badge tone={tone} label={`SSE 연결 ${connectionStatusLabel(status)}`}>
+      {connectionStatusLabel(status)}
     </Badge>
   );
 }
@@ -549,8 +569,8 @@ function SeverityBadge({ severity }: { severity: EventSeverity }) {
         ? "warning"
         : "neutral";
   return (
-    <Badge tone={tone} label={`Severity ${severity}`}>
-      {severity}
+    <Badge tone={tone} label={`심각도 ${severityLabel(severity)}`}>
+      {severityLabel(severity)}
     </Badge>
   );
 }

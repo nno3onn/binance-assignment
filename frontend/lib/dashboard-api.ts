@@ -128,7 +128,7 @@ async function fetchJson<T>(fetcher: typeof fetch, url: string): Promise<T> {
     cache: "no-store"
   });
   if (!response.ok) {
-    throw new Error(`Dashboard API request failed: ${response.status}`);
+    throw new Error(`대시보드 API 요청에 실패했습니다: ${response.status}`);
   }
   return (await response.json()) as T;
 }
@@ -143,8 +143,8 @@ function toDashboardSummary(
     environment: health.environment,
     last_updated_at: new Date().toISOString(),
     health_checks: [
-      toHealthCheck("API", health.status === "ok", "FastAPI health endpoint"),
-      toHealthCheck("DB", dbHealthy, "Dashboard read endpoints")
+      toHealthCheck("API", health.status === "ok", "FastAPI 상태 확인"),
+      toHealthCheck("DB", dbHealthy, "대시보드 조회 엔드포인트")
     ],
     symbols: summary.symbols.map((symbol) => ({
       ...symbol,

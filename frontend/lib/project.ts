@@ -1,4 +1,4 @@
-export const APP_NAME = "Binance Market Data Operations Console";
+export const APP_NAME = "시장 데이터 운영 대시보드";
 
 export const FRONTEND_STACK = [
   "Next.js App Router",

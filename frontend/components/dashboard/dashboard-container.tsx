@@ -12,8 +12,8 @@ export function DashboardContainer() {
       <main className="min-h-screen bg-slate-100 p-6">
         <StatePanel
           state="loading"
-          title="Loading dashboard"
-          message="Fetching the initial REST snapshot from the backend."
+          title="대시보드를 불러오는 중입니다."
+          message="백엔드에서 초기 데이터를 불러오는 중입니다."
         />
       </main>
     );
@@ -24,8 +24,8 @@ export function DashboardContainer() {
       <main className="min-h-screen bg-slate-100 p-6">
         <StatePanel
           state="error"
-          title="Dashboard unavailable"
-          message={state.apiError.message}
+          title="대시보드를 사용할 수 없습니다."
+          message={`초기 데이터를 불러오지 못했습니다. ${state.apiError.message}`}
         />
       </main>
     );
@@ -36,8 +36,8 @@ export function DashboardContainer() {
       <main className="min-h-screen bg-slate-100 p-6">
         <StatePanel
           state="empty"
-          title="No dashboard data"
-          message="Backend responded, but no runtime status, candles, jobs, or events are available yet."
+          title="데이터가 없습니다."
+          message="백엔드는 응답했지만 아직 수집 상태, 캔들, 작업, 이벤트 데이터가 없습니다."
         />
       </main>
     );

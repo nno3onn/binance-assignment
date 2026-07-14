@@ -41,7 +41,9 @@ export function connectDashboardStream({
   };
   source.onerror = () => {
     handlers.onConnectionChange("RECONNECTING");
-    handlers.onStreamError("SSE connection lost; browser reconnect is active.");
+    handlers.onStreamError(
+      "SSE 연결이 끊겼습니다. 브라우저가 재연결을 시도하고 있습니다."
+    );
   };
 
   source.addEventListener("error", (event) => {
@@ -52,14 +54,14 @@ export function connectDashboardStream({
     handlers.onStreamError(
       isRecord(payload) && typeof payload.message === "string"
         ? payload.message
-        : "SSE error event received"
+        : "SSE 오류 이벤트를 수신했습니다."
     );
     handlers.onConnectionChange("ERROR");
   });
 
   source.addEventListener("dashboard_snapshot", (event) => {
     if (!hasStringData(event)) {
-      handlers.onStreamError("Invalid dashboard snapshot ignored.");
+      handlers.onStreamError("잘못된 대시보드 스냅샷을 무시했습니다.");
       return;
     }
     const payload = parseJson(event.data);
@@ -68,12 +70,12 @@ export function connectDashboardStream({
       handlers.onConnectionChange("LIVE");
       return;
     }
-    handlers.onStreamError("Invalid dashboard snapshot ignored.");
+    handlers.onStreamError("잘못된 대시보드 스냅샷을 무시했습니다.");
   });
 
   source.addEventListener("heartbeat", (event) => {
     if (!hasStringData(event)) {
-      handlers.onStreamError("Invalid heartbeat ignored.");
+      handlers.onStreamError("잘못된 하트비트를 무시했습니다.");
       return;
     }
     const payload = parseJson(event.data);
@@ -81,7 +83,7 @@ export function connectDashboardStream({
       handlers.onHeartbeat(payload);
       return;
     }
-    handlers.onStreamError("Invalid heartbeat ignored.");
+    handlers.onStreamError("잘못된 하트비트를 무시했습니다.");
   });
 
   return {

@@ -5,9 +5,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Binance Market Data Operations Console",
-  description:
-    "Operations console scaffold for Binance market data pipeline monitoring"
+  title: "시장 데이터 운영 대시보드",
+  description: "Binance 시장 데이터 수집 파이프라인 운영 대시보드"
 };
 
 type RootLayoutProps = {
@@ -16,7 +15,7 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body>
         <Providers>{children}</Providers>
       </body>

@@ -12,8 +12,8 @@ export const dashboardFixture: DashboardFixture = {
     recent_backfill_job_count: 3,
     recent_event_count: 5,
     health_checks: [
-      { name: "API", status: "OK", detail: "FastAPI read endpoints healthy" },
-      { name: "DB", status: "OK", detail: "PostgreSQL session responding" }
+      { name: "API", status: "OK", detail: "FastAPI 조회 엔드포인트 정상" },
+      { name: "DB", status: "OK", detail: "PostgreSQL 세션 응답 정상" }
     ],
     symbols: [
       {
@@ -190,7 +190,7 @@ export const dashboardFixture: DashboardFixture = {
       event_type: "recovery_started",
       symbol: "ETHUSDT",
       interval: "1m",
-      message: "Restart recovery started for detected ETHUSDT gap."
+      message: "탐지된 ETHUSDT 누락 구간에 대한 재시작 복구를 시작했습니다."
     },
     {
       id: 100,
@@ -199,7 +199,7 @@ export const dashboardFixture: DashboardFixture = {
       event_type: "websocket_reconnecting",
       symbol: "ETHUSDT",
       interval: "1m",
-      message: "ETHUSDT stream reconnecting after stale heartbeat."
+      message: "ETHUSDT 하트비트 지연으로 스트림을 재연결하고 있습니다."
     },
     {
       id: 99,
@@ -208,7 +208,7 @@ export const dashboardFixture: DashboardFixture = {
       event_type: "websocket_connected",
       symbol: "BTCUSDT",
       interval: "1m",
-      message: "BTCUSDT WebSocket stream is connected."
+      message: "BTCUSDT 웹소켓 스트림이 연결되었습니다."
     },
     {
       id: 98,
@@ -217,7 +217,7 @@ export const dashboardFixture: DashboardFixture = {
       event_type: "initial_backfill_completed",
       symbol: "ETHUSDT",
       interval: "1m",
-      message: "Initial 24h backfill completed for ETHUSDT."
+      message: "ETHUSDT 초기 24시간 백필이 완료되었습니다."
     },
     {
       id: 97,
@@ -226,7 +226,7 @@ export const dashboardFixture: DashboardFixture = {
       event_type: "initial_backfill_completed",
       symbol: "BTCUSDT",
       interval: "1m",
-      message: "Initial 24h backfill completed for BTCUSDT."
+      message: "BTCUSDT 초기 24시간 백필이 완료되었습니다."
     }
   ],
   source_mix: [
