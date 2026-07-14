@@ -16,21 +16,26 @@ services:
       retries: 20
 
   backend:
-    image: alpine:3.20
-    profiles: ["app"]
-    command: ["sh", "-c", "echo 'TODO T02: replace with FastAPI backend service' && sleep infinity"]
+    build:
+      context: ./backend
     depends_on:
       postgres:
         condition: service_healthy
     env_file:
       - .env.example
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-binance}:${POSTGRES_PASSWORD:-binance}@postgres:5432/${POSTGRES_DB:-binance_assignment}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
 
   frontend:
-    image: alpine:3.20
-    profiles: ["app"]
-    command: ["sh", "-c", "echo 'TODO T03: replace with Next.js frontend service' && sleep infinity"]
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+        NEXT_PUBLIC_SSE_URL: ${NEXT_PUBLIC_SSE_URL:-http://localhost:8000/api/dashboard/stream}
+    depends_on:
+      - backend
     env_file:
       - .env.example
     ports:

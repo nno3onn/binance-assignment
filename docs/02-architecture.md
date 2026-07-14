@@ -25,10 +25,15 @@ flowchart LR
 - FastAPI: exposes dashboard data and SSE.
 - Next.js: renders operations console.
 
+## Local Process Model
+- Docker Compose starts PostgreSQL, FastAPI, and Next.js.
+- Alembic migrations run before the FastAPI server starts in the backend container.
+- Collector/backfill/recovery orchestration exists as service code but is not yet wired into a long-running production worker supervisor.
+- Smoke and recovery scripts verify running services and fail when required live data or control hooks are missing.
+- SSE emits `dashboard_snapshot`, `heartbeat`, and `error` events for the frontend operations console.
+
 ## Update Rule
 Architecture changes require this document, `PRODUCT.md`, and affected design docs to be updated.
 
 ## Open Decisions
-- Process model for collector and API in local Docker.
 - Whether recovery runs synchronously on startup or as a background job.
-- SSE event shape.

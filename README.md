@@ -1,78 +1,143 @@
 # Binance Market Data Operations Console
 
-This repository is a hiring-assignment implementation plan and harness for a Binance real-time market data collection system.
+Binance BTCUSDT/ETHUSDT 1m market-data pipeline assignment focused on operational reliability: collection health, freshness, gap detection, backfill/recovery, and reviewer-verifiable checks.
 
-Dashboard statement:
+> This is an operations console, not a trading or price-board app.
 
-> “이 화면은 코인 가격을 조회하는 화면이 아니라, Binance market data pipeline이 정상적으로 수집, 저장, 탐지, 복구되고 있는지 확인하는 운영 콘솔이다.”
+## Architecture
 
-## Current Status
-Backend data flow, dashboard API, SSE stream, frontend operations console, smoke test, and recovery drill automation are implemented through T18.
+```mermaid
+flowchart LR
+  BWS["Binance WebSocket"] --> COL["Collector"]
+  BREST["Binance REST API"] --> BF["Initial Backfill"]
+  BREST --> REC["Restart Recovery"]
+  COL --> ST["Runtime Status"]
+  COL --> DB[("PostgreSQL")]
+  BF --> DB
+  REC --> DB
+  ST --> DB
+  DB --> API["FastAPI REST API"]
+  API --> SSE["SSE Stream"]
+  API --> UI["Next.js Operations Dashboard"]
+  SSE --> UI
+```
 
-First incomplete Task: `T19 - Finalize README and reviewer docs`.
+Core identity: candles are idempotent by `(symbol, interval, open_time)`.
 
 ## Stack
-- Backend: FastAPI, PostgreSQL.
-- Python: 3.12 managed by uv.
-- Frontend: Next.js App Router, TypeScript, Tailwind CSS, TanStack Query, Zustand, Recharts.
-- Frontend tests: Vitest.
-- Realtime: Binance WebSocket, dashboard SSE.
-- Backfill: Binance REST API.
-- Runtime: Docker Compose.
 
-## Commands
+- Backend: Python 3.12, FastAPI, SQLAlchemy, Alembic, uv
+- Data store: PostgreSQL
+- Binance integrations: REST klines and WebSocket kline stream clients
+- Frontend: Next.js App Router, TypeScript, Tailwind CSS, TanStack Query, Zustand, Recharts
+- Realtime dashboard transport: Server-Sent Events
+- Verification: pytest, mypy, ruff, Vitest, ESLint, Prettier, shell smoke/recovery scripts
+
+## Directory Structure
+
+```text
+backend/
+  app/api/              Dashboard REST and SSE endpoints
+  app/binance/          Binance REST/WebSocket adapters and DTOs
+  app/domain/           Domain enums and input models
+  app/repositories/     Idempotent persistence layer
+  app/services/         Backfill, recovery, gaps, status, events, dashboard queries
+  migrations/           Alembic migrations
+  tests/                Backend unit/integration tests
+frontend/
+  app/                  Next.js App Router entry
+  components/           Dashboard and reusable UI components
+  lib/                  REST/SSE clients, realtime state, view models
+  tests/                Vitest tests
+docs/                   Architecture, storage, dashboard, recovery, reviewer docs
+scripts/                check, smoke, recovery-drill, reset placeholders
+```
+
+## Quick Start
+
+Prerequisites:
+- Docker and Docker Compose for containerized run
+- Node.js 18+ and npm for local frontend checks
+- Python 3.12 and uv for local backend checks
+- curl and python3 for smoke tests
 
 ```sh
+cp .env.example .env
 make bootstrap
-make up
-make down
-make logs
-make lint
-make typecheck
-make test
-make build
 make check
-make smoke
-make reset-db
-make recovery-drill
+make up
 ```
 
-At the current stage, backend and frontend lint, typecheck, tests, and frontend build are active. `make smoke` and `make recovery-drill` verify already-running services. Database reset remains a guarded placeholder until its linked work is completed.
+Open:
+- Frontend: `http://localhost:3000`
+- Backend OpenAPI: `http://localhost:8000/docs`
+- Backend health: `http://localhost:8000/api/health`
 
-## Database Migrations
-
-Backend migrations use Alembic and target PostgreSQL. During local unit tests they are also exercised against temporary SQLite databases so migration up, down, and re-run behavior can be verified without Docker.
-
-From `backend/`:
+Stop services:
 
 ```sh
-uv run alembic upgrade head
-uv run alembic downgrade base
+make down
 ```
 
-## Persistence Layer
+## Environment Variables
 
-The backend repository layer uses SQLAlchemy ORM models and keeps candle writes idempotent with the `symbol + interval + open_time` identity. Repository unit tests run against SQLite and avoid PostgreSQL-only SQL in the public repository API.
+Common values are documented in `.env.example`.
 
-## Binance REST Client
+| Variable | Default | Purpose |
+|---|---:|---|
+| `SYMBOLS` | `BTCUSDT,ETHUSDT` | Monitored symbols |
+| `CANDLE_INTERVAL` | `1m` | Candle interval |
+| `INITIAL_BACKFILL_HOURS` | `24` | Empty-DB initial lookback |
+| `DATABASE_URL` | compose default | Backend database URL |
+| `BINANCE_REST_BASE_URL` | `https://api.binance.com` | REST endpoint |
+| `BINANCE_WS_BASE_URL` | `wss://stream.binance.com:9443` | WebSocket endpoint |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8000` | Frontend REST base URL |
+| `NEXT_PUBLIC_SSE_URL` | `http://localhost:8000/api/dashboard/stream` | Frontend SSE URL |
+| `DASHBOARD_SSE_INTERVAL_SECONDS` | `5` | SSE snapshot interval |
+| `DASHBOARD_SSE_HEARTBEAT_SECONDS` | `15` | SSE heartbeat interval |
 
-The Binance REST client is an adapter only. It does not call repositories or services. It provides `ping`, `get_server_time`, and `get_klines`, maps kline arrays into internal DTOs, and handles timeout, network, 4xx, 5xx, 429, invalid response, and bounded exponential-backoff retry behavior.
+## Main Features
 
-## Initial Backfill
+- Alembic schema for candles, runtime status, backfill jobs, and application events
+- Idempotent candle upsert with unique `(symbol, interval, open_time)`
+- Binance REST client with DTO mapping, timeout, retry, rate-limit, and invalid-response handling
+- Initial backfill for empty symbol data using `INITIAL_BACKFILL_HOURS`
+- WebSocket collector with validation, keepalive, reconnect, and graceful shutdown primitives
+- Runtime status tracking: `INITIALIZING`, `LIVE`, `DEGRADED`, `BACKFILLING`, `STALE`, `ERROR`
+- Independent gap detection and restart recovery service
+- Event history for collection, backfill, recovery, and invalid-message events
+- Read-only dashboard REST API and SSE stream
+- Operations dashboard focused on pipeline health, freshness, gaps, recovery, and event history
 
-Initial backfill runs only when a symbol has no stored candles. It fetches the recent `INITIAL_BACKFILL_HOURS` window through the Binance REST client, maps DTOs into candle domain inputs, and persists them through the idempotent repository path with `source=rest_backfill`.
+## Dashboard
 
-## Binance WebSocket Collector
+The dashboard prioritizes operational health over price movement:
+- System Health Summary
+- Data Freshness
+- Symbol Pipeline Status
+- Gap Detector
+- Backfill Job Timeline
+- Recent Candle Chart
+- Recent Event Log
+- Source Mix
+- SSE connection state and last good update time
 
-The WebSocket collector subscribes to combined Binance kline streams for configured symbols and emits validated internal DTOs. It handles keepalive ping/pong, graceful shutdown, invalid message filtering, and bounded exponential reconnects. It does not persist data or update runtime status in T08.
+REST performs initial hydration; SSE applies realtime dashboard snapshots and heartbeat/error state.
 
-## Event History
+## Backfill And Recovery
 
-The event history layer records operational events such as WebSocket connect/disconnect/reconnect, invalid messages, initial backfill completion, and restart recovery completion/failure. Event recording is best-effort so a temporary event-store failure does not stop collection or recovery.
+Initial backfill:
+- Runs only when a symbol has no stored candles.
+- Fetches recent klines through Binance REST.
+- Stores rows with `source=rest_backfill` through idempotent repository upsert.
 
-## Dashboard REST API
+Restart recovery:
+- Uses gap detection to identify missing 1m candle ranges.
+- Fetches only missing ranges through REST.
+- Writes recovered rows through bulk upsert.
+- Records recovery events and backfill job history.
 
-Read-only dashboard endpoints:
+## API Endpoints
 
 - `GET /api/health`
 - `GET /api/dashboard/summary`
@@ -81,28 +146,39 @@ Read-only dashboard endpoints:
 - `GET /api/dashboard/gaps`
 - `GET /api/dashboard/backfill-jobs`
 - `GET /api/dashboard/events`
-- `GET /api/dashboard/stream` for SSE dashboard snapshots and heartbeat events
+- `GET /api/dashboard/stream`
 
-## Frontend Realtime Dashboard
+## Verification
 
-The frontend uses `NEXT_PUBLIC_API_BASE_URL` for initial REST hydration and `NEXT_PUBLIC_SSE_URL` for realtime dashboard snapshots. REST loads the initial dashboard state, recent candles, gaps, backfill jobs, and events. SSE then updates the dashboard summary and symbol statuses through `dashboard_snapshot`, `heartbeat`, and `error` events without REST polling.
-
-Required frontend environment variables:
+Canonical local checks:
 
 ```sh
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-NEXT_PUBLIC_SSE_URL=http://localhost:8000/api/dashboard/stream
+make lint
+make typecheck
+make test
+make build
+make check
 ```
+
+`make check` runs backend lint/typecheck/tests and frontend lint/typecheck/tests/build.
 
 ## Smoke Test
 
-`make smoke` checks a running system through HTTP only. Start backend and frontend first, then run:
+`make smoke` checks a running system through HTTP:
+- backend health
+- dashboard summary
+- BTCUSDT and ETHUSDT symbol status
+- at least one candle per symbol
+- events endpoint
+- SSE `text/event-stream`
+- frontend page and dashboard title
 
 ```sh
+make up
 make smoke
 ```
 
-Optional overrides:
+Overrides:
 
 ```sh
 SMOKE_API_BASE_URL=http://localhost:8000 \
@@ -111,17 +187,20 @@ SMOKE_RETRIES=20 \
 make smoke
 ```
 
-The script requires `curl` and `python3`, does not require `jq`, and fails fast with `[FAIL]` when a required endpoint or data condition is missing.
-
 ## Recovery Drill
 
-`make recovery-drill` verifies a running system by injecting a real candle gap, waiting for dashboard gap detection, triggering restart recovery, and checking that gaps return to 0 with no duplicate `(symbol, interval, open_time)` rows.
+`make recovery-drill` is a running-system operational drill. It injects a real DB gap by deleting recent candle rows for `DRILL_SYMBOL`, verifies the gap API detects it, triggers recovery, then checks:
+- restart recovery job recorded/completed
+- missing candle count returns to 0
+- symbol status returns to LIVE
+- recovery event exists
+- duplicate candle keys remain 0
 
-Required runtime conditions:
-- backend, frontend, and PostgreSQL are already running;
-- recent BTCUSDT/ETHUSDT candles exist;
-- DB access is available through host `psql` plus `DATABASE_URL`, or through Docker Compose `postgres`;
-- recovery can be triggered through `DRILL_RECOVERY_TRIGGER_URL` or `DRILL_RECOVERY_COMMAND`.
+Required:
+- running backend, frontend, and PostgreSQL
+- recent candles already present
+- DB access through host `psql` + `DATABASE_URL`, or Docker Compose `postgres`
+- a recovery trigger via `DRILL_RECOVERY_TRIGGER_URL` or `DRILL_RECOVERY_COMMAND`
 
 Example:
 
@@ -129,31 +208,47 @@ Example:
 DATABASE_URL=postgresql://binance:binance@localhost:5432/binance_assignment \
 DRILL_SYMBOL=BTCUSDT \
 DRILL_GAP_SECONDS=70 \
-DRILL_RECOVERY_TRIGGER_URL=http://localhost:8000/<test-only-recovery-trigger> \
+DRILL_RECOVERY_COMMAND='<project-specific recovery command>' \
 make recovery-drill
 ```
 
-If the recovery trigger is not configured, the drill fails with `[FAIL]` rather than claiming success.
+The drill fails with `[FAIL]` if prerequisites or a recovery trigger are missing.
 
-## Required Reading Before Work
-1. `PRODUCT.md`
-2. `AGENTS.md`
-3. `TASKS.md`
-4. Relevant `docs/*`
+## Design Decisions
 
-## Design Docs
-- `docs/00-project-guidelines.md`
-- `docs/01-requirements-and-scope.md`
-- `docs/02-architecture.md`
-- `docs/03-data-collection-design.md`
-- `docs/04-backfill-and-recovery.md`
-- `docs/05-storage-design.md`
-- `docs/06-dashboard-design.md`
-- `docs/07-testing-strategy.md`
-- `docs/08-ai-collaboration-log.md`
-- `docs/09-reviewer-walkthrough.md`
+- Operations first: dashboard explains collection health, freshness, gaps, recovery, and events.
+- Idempotency first: duplicate REST/WebSocket writes must not create duplicate candles.
+- Source lineage: each candle records `websocket` or `rest_backfill`.
+- Recovery is explicit: missing ranges are detected independently before REST repair.
+- SSE simplicity: browser EventSource handles reconnect; the UI preserves last good data.
+- Tests avoid live Binance calls; external integrations are mocked at unit level.
 
-## Submission Criteria
-- Public GitHub repository is accessible.
-- README, docs, code, tests, and `TASKS.md` are consistent.
-- `make check`, `make smoke`, and `make recovery-drill` pass after implementation Tasks are complete.
+## Known Limitations
+
+- The repository has service classes for collection/backfill/recovery, but no full production process supervisor that automatically starts collector, initial backfill, and recovery on container boot.
+- `make up` starts the FastAPI API, frontend, and PostgreSQL, but it does not by itself seed candle data.
+- Recovery drill requires an explicit recovery trigger command or URL because no public admin recovery endpoint is exposed by default.
+- Dockerized frontend bakes `NEXT_PUBLIC_*` values at build time; rebuild after changing those values.
+- Smoke/recovery drills require real running services and real stored candle data; they intentionally fail rather than using fixtures.
+
+## Future Improvements
+
+- Add a single backend worker entrypoint for initial backfill, collector, and restart recovery orchestration.
+- Add a test-only recovery trigger guarded by an explicit environment variable for deterministic reviewer demos.
+- Add richer ingestion-rate metrics and source-mix aggregation API.
+- Add CI job that builds Docker images and runs a containerized smoke scenario.
+- Add retention and archival policy for candles and application events.
+
+## AI Collaboration
+
+AI was used as an implementation partner under a task harness:
+- design and task decomposition before coding
+- scoped implementation per task
+- repository, migration, service, API, dashboard, smoke, and drill tests
+- documentation updates after each task
+
+See `docs/08-ai-collaboration-log.md` for task-by-task details.
+
+## Reviewer Walkthrough
+
+For the 5-10 minute review path, start with `docs/09-reviewer-walkthrough.md`.

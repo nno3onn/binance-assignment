@@ -184,7 +184,7 @@ Each Task should be small enough for one focused Codex turn and one commit. Do n
 
 ## Phase 10. Documentation and submission validation
 
-- [ ] **T19 - Finalize README and reviewer docs**
+- [x] **T19 - Finalize README and reviewer docs**
   - Goal: Make setup, run, verification, architecture, and limitations reviewer-friendly.
   - Scope: README and docs updates only.
   - Expected files: `README.md`, `docs/09-reviewer-walkthrough.md`, `docs/*`.
