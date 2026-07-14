@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from typing import Any, cast
 
 import pytest
 from fastapi.testclient import TestClient
@@ -26,6 +27,41 @@ from app.domain.market_data import (
 from app.main import create_app
 from app.models import Base
 from app.repositories.sqlalchemy_market_data import SqlAlchemyMarketDataRepository
+from app.services.dashboard import DashboardQueryConfig, DashboardQueryService
+
+
+class EmptyBoundaryRepository:
+    def get_runtime_status(self, _symbol: str, _interval: str) -> None:
+        return None
+
+    def get_latest_candle(self, _symbol: str, _interval: str) -> None:
+        return None
+
+    def get_first_open_time(self, _symbol: str, _interval: str) -> None:
+        return None
+
+    def list_candles_by_symbol(
+        self, _symbol: str, _interval: str, _limit: int = 100
+    ) -> None:
+        return None
+
+    def list_candles_in_range(
+        self,
+        _symbol: str,
+        _interval: str,
+        _start: datetime,
+        _end: datetime,
+    ) -> None:
+        return None
+
+    def list_recent_backfill_jobs(self, _limit: int = 100) -> None:
+        return None
+
+    def list_recent_application_events(self, _limit: int = 100) -> None:
+        return None
+
+    def __getattr__(self, _name: str) -> Any:
+        raise AssertionError("Unexpected repository call in empty dashboard summary")
 
 
 @pytest.fixture()
@@ -231,8 +267,56 @@ def test_event_list(
 
 
 def test_empty_database_returns_meaningful_empty_responses(client: TestClient) -> None:
-    assert client.get("/api/dashboard/summary").status_code == 200
+    summary_response = client.get("/api/dashboard/summary")
+
+    assert summary_response.status_code == 200
+    summary = summary_response.json()
+    assert summary == {
+        "system_status": "INITIALIZING",
+        "symbols": [
+            {
+                "symbol": "BTCUSDT",
+                "interval": "1m",
+                "status": "INITIALIZING",
+                "last_event_at": None,
+                "last_candle_open_time": None,
+                "freshness_seconds": None,
+                "lag_seconds": None,
+                "latest_price": None,
+            },
+            {
+                "symbol": "ETHUSDT",
+                "interval": "1m",
+                "status": "INITIALIZING",
+                "last_event_at": None,
+                "last_candle_open_time": None,
+                "freshness_seconds": None,
+                "lag_seconds": None,
+                "latest_price": None,
+            },
+        ],
+        "total_missing_candle_count": 0,
+        "active_gap_count": 0,
+        "recent_backfill_job_count": 0,
+        "recent_event_count": 0,
+    }
     assert client.get("/api/dashboard/candles?symbol=BTCUSDT").json()["candles"] == []
     assert client.get("/api/dashboard/gaps").json()["gaps"] == []
     assert client.get("/api/dashboard/backfill-jobs").json()["jobs"] == []
     assert client.get("/api/dashboard/events").json()["events"] == []
+
+
+def test_dashboard_summary_treats_none_repository_results_as_empty() -> None:
+    service = DashboardQueryService(
+        cast(Any, EmptyBoundaryRepository()),
+        DashboardQueryConfig(symbols=["BTCUSDT", "ETHUSDT"], interval="1m"),
+    )
+
+    summary = service.summary()
+
+    assert summary.system_status == "INITIALIZING"
+    assert [symbol.status for symbol in summary.symbols] == ["INITIALIZING", "INITIALIZING"]
+    assert summary.total_missing_candle_count == 0
+    assert summary.active_gap_count == 0
+    assert summary.recent_backfill_job_count == 0
+    assert summary.recent_event_count == 0

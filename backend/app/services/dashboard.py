@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -73,7 +74,7 @@ class DashboardQueryService:
                 self._config.interval,
                 limit=limit,
             )
-        return [CandleResponse.model_validate(candle) for candle in candles[:limit]]
+        return [CandleResponse.model_validate(candle) for candle in self._items(candles)[:limit]]
 
     def gaps(
         self,
@@ -104,13 +105,13 @@ class DashboardQueryService:
     def backfill_jobs(self, limit: int) -> list[BackfillJobResponse]:
         return [
             BackfillJobResponse.model_validate(job)
-            for job in self._repository.list_recent_backfill_jobs(limit)
+            for job in self._items(self._repository.list_recent_backfill_jobs(limit))
         ]
 
     def events(self, limit: int) -> list[ApplicationEventResponse]:
         return [
             ApplicationEventResponse.model_validate(event)
-            for event in self._repository.list_recent_application_events(limit)
+            for event in self._items(self._repository.list_recent_application_events(limit))
         ]
 
     def _symbol_status(self, symbol: str) -> SymbolStatusResponse:
@@ -148,3 +149,9 @@ class DashboardQueryService:
         if all(symbol.status == "LIVE" for symbol in symbols):
             return "LIVE"
         return "INITIALIZING"
+
+    @staticmethod
+    def _items(values: Iterable[object] | None) -> list[object]:
+        if values is None:
+            return []
+        return list(values)
